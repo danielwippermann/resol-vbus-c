@@ -1,0 +1,63 @@
+outputDirname = output
+hostOutputDirname = $outputDirname/host
+embeddedOutputDirname = $outputDirname/embedded
+
+# embeddedPrefix = /Users/daniel/Projects/Tools/gcc-arm-none-eabi-10.3-2021.10/bin/arm-none-eabi-
+
+include local.ninja
+
+rule compileHost
+    command = rm -f $$(dirname $out)/$$(basename $out .o).{gcda,gcno} && ccache clang -Wall -Werror -Wpedantic -Iinclude -O0 -g3 --coverage -DRESOLVBUS_DEBUG=1 -MD -MF $out.d -c -o $out $in
+    depfile = $out.d
+
+rule linkHost
+    command = ccache clang -Wall -Werror --coverage -o $out $in
+
+rule compileEmbedded
+    command = ccache ${embeddedPrefix}gcc -Wall -Werror -Iinclude -O3 -MD -MF $out.d -c -o $out $in
+    depfile = $out.d
+
+rule archiveEmbedded
+    command = rm -f $out && ccache ${embeddedPrefix}ar rcs $out $in
+
+build $hostOutputDirname/tmp/src/ResolVBusBase.o: compileHost src/ResolVBusBase.c
+build $hostOutputDirname/tmp/src/ResolVBusDebug.o: compileHost src/ResolVBusDebug.c
+build $hostOutputDirname/tmp/src/ResolVBusLiveDecoder.o: compileHost src/ResolVBusLiveDecoder.c
+build $hostOutputDirname/tmp/src/ResolVBusLiveEncoder.o: compileHost src/ResolVBusLiveEncoder.c
+
+build $hostOutputDirname/tmp/test/BaseTestSuite.o: compileHost test/BaseTestSuite.c
+build $hostOutputDirname/tmp/test/LiveDecoderTestSuite.o: compileHost test/LiveDecoderTestSuite.c
+build $hostOutputDirname/tmp/test/LiveEncoderTestSuite.o: compileHost test/LiveEncoderTestSuite.c
+build $hostOutputDirname/tmp/test/MasterExampleTest.o: compileHost test/MasterExampleTest.c
+build $hostOutputDirname/tmp/test/MinionExampleTest.o: compileHost test/MinionExampleTest.c
+build $hostOutputDirname/tmp/test/TestData.o: compileHost test/TestData.c
+build $hostOutputDirname/tmp/test/TestMain.o: compileHost test/TestMain.c
+
+build $hostOutputDirname/bin/ResolVBusTest: linkHost $hostOutputDirname/tmp/src/ResolVBusBase.o $
+                                                     $hostOutputDirname/tmp/src/ResolVBusDebug.o $
+                                                     $hostOutputDirname/tmp/src/ResolVBusLiveDecoder.o $
+                                                     $hostOutputDirname/tmp/src/ResolVBusLiveEncoder.o $
+                                                     $
+                                                     $hostOutputDirname/tmp/test/BaseTestSuite.o $
+                                                     $hostOutputDirname/tmp/test/LiveDecoderTestSuite.o $
+                                                     $hostOutputDirname/tmp/test/LiveEncoderTestSuite.o $
+                                                     $hostOutputDirname/tmp/test/MasterExampleTest.o $
+                                                     $hostOutputDirname/tmp/test/MinionExampleTest.o $
+                                                     $hostOutputDirname/tmp/test/TestData.o $
+                                                     $hostOutputDirname/tmp/test/TestMain.o $
+
+build $embeddedOutputDirname/tmp/src/ResolVBusBase.o: compileEmbedded src/ResolVBusBase.c
+build $embeddedOutputDirname/tmp/src/ResolVBusLiveDecoder.o: compileEmbedded src/ResolVBusLiveDecoder.c
+build $embeddedOutputDirname/tmp/src/ResolVBusLiveEncoder.o: compileEmbedded src/ResolVBusLiveEncoder.c
+
+build $embeddedOutputDirname/lib/libResolVBus.a: archiveEmbedded $embeddedOutputDirname/tmp/src/ResolVBusBase.o $
+                                                                 $embeddedOutputDirname/tmp/src/ResolVBusLiveDecoder.o $
+                                                                 $embeddedOutputDirname/tmp/src/ResolVBusLiveEncoder.o $
+
+build $embeddedOutputDirname/tmp/examples/Master.o: compileEmbedded examples/Master.c
+build $embeddedOutputDirname/tmp/examples/Minion.o: compileEmbedded examples/Minion.c
+
+build embeddedExamples: phony $embeddedOutputDirname/tmp/examples/Master.o $
+                              $embeddedOutputDirname/tmp/examples/Minion.o $
+
+default $hostOutputDirname/bin/ResolVBusTest $embeddedOutputDirname/lib/libResolVBus.a embeddedExamples
