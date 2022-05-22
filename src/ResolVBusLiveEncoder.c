@@ -59,6 +59,18 @@ static bool __IsIdle(RESOLVBUS_LIVEENCODER *Encoder)
 }
 
 
+static RESOLVBUS_RESULT __EnsureNotSuspended(RESOLVBUS_LIVEENCODER *Encoder)
+{
+    RESOLVBUS_RESULT Result = RESOLVBUS_OK;
+
+    if ((Encoder->Phase == RESOLVBUS_LIVEENCODERPHASE_SUSPENDED) || (Encoder->Phase == RESOLVBUS_LIVEENCODERPHASE_SUSPENDEDWITHTIMEOUT) || Encoder->SuspendRequested || Encoder->SuspendWithTimeoutRequested) {
+        __FAIL(SUSPENDED);
+    }
+
+    return Result;
+}
+
+
 
 //---------------------------------------------------------------------------
 // PUBLIC METHODS
@@ -266,10 +278,19 @@ RESOLVBUS_RESULT ResolVBus_LiveEncoder_Suspend(RESOLVBUS_LIVEENCODER *Encoder)
     __ASSERT_WITH(NULLPOINTER, Encoder);
 
     if (Result == RESOLVBUS_OK) {
-        Encoder->SuspendRequested = true;
+        if (Encoder->Phase == RESOLVBUS_LIVEENCODERPHASE_SUSPENDED) {
+            // nop
+        } else if (Encoder->Phase == RESOLVBUS_LIVEENCODERPHASE_SUSPENDEDWITHTIMEOUT) {
+            Encoder->Phase = RESOLVBUS_LIVEENCODERPHASE_SUSPENDED;
+        } else {
+            bool WasIdle = __IsIdle(Encoder);
 
-        if (__IsIdle(Encoder)) {
-            __WRAP(ResolVBus_LiveEncoder_HandleTimer(Encoder, 0));
+            Encoder->SuspendRequested = true;
+            Encoder->SuspendWithTimeoutRequested = false;
+
+            if (WasIdle) {
+                __WRAP(ResolVBus_LiveEncoder_HandleTimer(Encoder, 0));
+            }
         }
     }
 
@@ -284,13 +305,23 @@ RESOLVBUS_RESULT ResolVBus_LiveEncoder_SuspendWithTimeout(RESOLVBUS_LIVEENCODER 
     __ASSERT_WITH(NULLPOINTER, Encoder);
 
     if (Result == RESOLVBUS_OK) {
-        Encoder->SuspendWithTimeoutRequested = true;
-        if (Encoder->SuspendTimeoutUs < Microseconds) {
-            Encoder->SuspendTimeoutUs = Microseconds;
-        }
+        if (Encoder->Phase == RESOLVBUS_LIVEENCODERPHASE_SUSPENDEDWITHTIMEOUT) {
+            if (Encoder->PhaseTimeoutUs < Microseconds) {
+                Encoder->PhaseTimeoutUs = Microseconds;
+            }
+        } else if ((Encoder->Phase == RESOLVBUS_LIVEENCODERPHASE_SUSPENDED) || Encoder->SuspendRequested) {
+            __FAIL(SUSPENDED);
+        } else {
+            bool WasIdle = __IsIdle(Encoder);
 
-        if (__IsIdle(Encoder)) {
-            __WRAP(ResolVBus_LiveEncoder_HandleTimer(Encoder, 0));
+            Encoder->SuspendWithTimeoutRequested = true;
+            if (Encoder->SuspendTimeoutUs < Microseconds) {
+                Encoder->SuspendTimeoutUs = Microseconds;
+            }
+
+            if (WasIdle) {
+                __WRAP(ResolVBus_LiveEncoder_HandleTimer(Encoder, 0));
+            }
         }
     }
 
@@ -325,6 +356,7 @@ RESOLVBUS_RESULT ResolVBus_LiveEncoder_QueuePacketHeader(RESOLVBUS_LIVEENCODER *
 
     __ASSERT_WITH(NULLPOINTER, Encoder);
     __ASSERT_WITH(INDEXOUTOFBOUNDS, (Encoder->BufferWriteIndex + 10) <= Encoder->BufferLength);
+    __WRAP(__EnsureNotSuspended(Encoder));
 
     if (Result == RESOLVBUS_OK) {
         uint8_t *Buffer = Encoder->Buffer + Encoder->BufferWriteIndex;
@@ -353,6 +385,8 @@ RESOLVBUS_RESULT ResolVBus_LiveEncoder_QueuePacketFrame(RESOLVBUS_LIVEENCODER *E
     __ASSERT_WITH(NULLPOINTER, Encoder && FourBytes);
     __ASSERT_WITH(INDEXOUTOFBOUNDS, (Encoder->BufferWriteIndex + 6) <= Encoder->BufferLength);
 
+    __WRAP(__EnsureNotSuspended(Encoder));
+
     if (Result == RESOLVBUS_OK) {
         uint8_t *Buffer = Encoder->Buffer + Encoder->BufferWriteIndex;
         Encoder->BufferWriteIndex += 6;
@@ -370,6 +404,8 @@ RESOLVBUS_RESULT ResolVBus_LiveEncoder_QueuePacketFrames(RESOLVBUS_LIVEENCODER *
     RESOLVBUS_RESULT Result = RESOLVBUS_OK;
 
     __ASSERT_WITH(NULLPOINTER, Encoder && Bytes);
+
+    __WRAP(__EnsureNotSuspended(Encoder));
 
     size_t SrcIndex = 0;
     while ((Result == RESOLVBUS_OK) && ((SrcIndex + 4) <= Length)) {
@@ -409,6 +445,8 @@ RESOLVBUS_RESULT ResolVBus_LiveEncoder_QueueDatagram(RESOLVBUS_LIVEENCODER *Enco
     __ASSERT_WITH(NULLPOINTER, Encoder);
     __ASSERT_WITH(INDEXOUTOFBOUNDS, (Encoder->BufferWriteIndex + 16) <= Encoder->BufferLength);
 
+    __WRAP(__EnsureNotSuspended(Encoder));
+
     if (Result == RESOLVBUS_OK) {
         uint8_t *Buffer = Encoder->Buffer + Encoder->BufferWriteIndex;
         Encoder->BufferWriteIndex += 16;
@@ -440,6 +478,8 @@ RESOLVBUS_RESULT ResolVBus_LiveEncoder_QueueTelegramHeader(RESOLVBUS_LIVEENCODER
     __ASSERT_WITH(NULLPOINTER, Encoder);
     __ASSERT_WITH(INDEXOUTOFBOUNDS, (Encoder->BufferWriteIndex + 8) <= Encoder->BufferLength);
 
+    __WRAP(__EnsureNotSuspended(Encoder));
+
     if (Result == RESOLVBUS_OK) {
         uint8_t *Buffer = Encoder->Buffer + Encoder->BufferWriteIndex;
         Encoder->BufferWriteIndex += 8;
@@ -466,6 +506,8 @@ RESOLVBUS_RESULT ResolVBus_LiveEncoder_QueueTelegramFrame(RESOLVBUS_LIVEENCODER 
     __ASSERT_WITH(NULLPOINTER, Encoder && SevenBytes);
     __ASSERT_WITH(INDEXOUTOFBOUNDS, (Encoder->BufferWriteIndex + 9) <= Encoder->BufferLength);
 
+    __WRAP(__EnsureNotSuspended(Encoder));
+
     if (Result == RESOLVBUS_OK) {
         uint8_t *Buffer = Encoder->Buffer + Encoder->BufferWriteIndex;
         Encoder->BufferWriteIndex += 9;
@@ -483,6 +525,8 @@ RESOLVBUS_RESULT ResolVBus_LiveEncoder_QueueTelegramFrames(RESOLVBUS_LIVEENCODER
     RESOLVBUS_RESULT Result = RESOLVBUS_OK;
 
     __ASSERT_WITH(NULLPOINTER, Encoder && Bytes);
+
+    __WRAP(__EnsureNotSuspended(Encoder));
 
     size_t SrcIndex = 0;
     while ((Result == RESOLVBUS_OK) && ((SrcIndex + 7) <= Length)) {
