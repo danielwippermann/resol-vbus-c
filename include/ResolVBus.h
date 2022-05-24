@@ -789,6 +789,9 @@ RESOLVBUS_RESULT ResolVBus_LiveEncoder_Resume(RESOLVBUS_LIVEENCODER *Encoder);
  *
  * See `ResolVBus_LiveEncoder_HandleTimer` for transmit buffer handling details.
  *
+ * This function will return `RESOLVBUS_ERROR_SUSPENDED` if the encoder is already flagged for
+ * or running in a suspended state.
+ *
  * @param Encoder Encoder instance
  * @param DestinationAddress Destination address of the packet
  * @param SourceAddress Source address of the packet
@@ -804,6 +807,9 @@ RESOLVBUS_RESULT ResolVBus_LiveEncoder_QueuePacketHeader(RESOLVBUS_LIVEENCODER *
  *
  * See `ResolVBus_LiveEncoder_HandleTimer` for transmit buffer handling details.
  *
+ * This function will return `RESOLVBUS_ERROR_SUSPENDED` if the encoder is already flagged for
+ * or running in a suspended state.
+ *
  * @param Encoder Encoder instance
  * @param FourBytes Buffer containing the four bytes payload of the frame
  * @returns RESOLVBUS_OK if no error occurred
@@ -817,6 +823,9 @@ RESOLVBUS_RESULT ResolVBus_LiveEncoder_QueuePacketFrame(RESOLVBUS_LIVEENCODER *E
  *
  * See `ResolVBus_LiveEncoder_HandleTimer` for transmit buffer handling details.
  *
+ * This function will return `RESOLVBUS_ERROR_SUSPENDED` if the encoder is already flagged for
+ * or running in a suspended state.
+ *
  * @param Encoder Encoder instance
  * @param Bytes Buffer containing the payload of the frames
  * @param Length Length of the `Bytes` buffer
@@ -828,6 +837,9 @@ RESOLVBUS_RESULT ResolVBus_LiveEncoder_QueuePacketFrames(RESOLVBUS_LIVEENCODER *
  * Queue a VBus datagram into the transmit buffer.
  *
  * See `ResolVBus_LiveEncoder_HandleTimer` for transmit buffer handling details.
+ *
+ * This function will return `RESOLVBUS_ERROR_SUSPENDED` if the encoder is already flagged for
+ * or running in a suspended state.
  *
  * @param Encoder Encoder instance
  * @param DestinationAddress Destination address of the datagram
@@ -845,6 +857,9 @@ RESOLVBUS_RESULT ResolVBus_LiveEncoder_QueueDatagram(RESOLVBUS_LIVEENCODER *Enco
  *
  * See `ResolVBus_LiveEncoder_HandleTimer` for transmit buffer handling details.
  *
+ * This function will return `RESOLVBUS_ERROR_SUSPENDED` if the encoder is already flagged for
+ * or running in a suspended state.
+ *
  * @param Encoder Encoder instance
  * @param DestinationAddress Destination address of the telegram
  * @param SourceAddress Source address of the telegram
@@ -860,6 +875,9 @@ RESOLVBUS_RESULT ResolVBus_LiveEncoder_QueueTelegramHeader(RESOLVBUS_LIVEENCODER
  *
  * See `ResolVBus_LiveEncoder_HandleTimer` for transmit buffer handling details.
  *
+ * This function will return `RESOLVBUS_ERROR_SUSPENDED` if the encoder is already flagged for
+ * or running in a suspended state.
+ *
  * @param Encoder Encoder instance
  * @param SevenBytes Buffer containing the seven bytes payload of the frame
  * @returns RESOLVBUS_OK if no error occurred
@@ -872,6 +890,9 @@ RESOLVBUS_RESULT ResolVBus_LiveEncoder_QueueTelegramFrame(RESOLVBUS_LIVEENCODER 
  * If `Length` is not a multiple of seven, the last frame is padded with 0xFF.
  *
  * See `ResolVBus_LiveEncoder_HandleTimer` for transmit buffer handling details.
+ *
+ * This function will return `RESOLVBUS_ERROR_SUSPENDED` if the encoder is already flagged for
+ * or running in a suspended state.
  *
  * @param Encoder Encoder instance
  * @param Bytes Buffer containing the payload of the frames
