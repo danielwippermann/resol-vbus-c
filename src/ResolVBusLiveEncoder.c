@@ -71,6 +71,43 @@ static RESOLVBUS_RESULT __EnsureNotSuspended(RESOLVBUS_LIVEENCODER *Encoder)
 }
 
 
+static RESOLVBUS_RESULT __SuspendWithTimeout(RESOLVBUS_LIVEENCODER *Encoder, uint32_t Microseconds, RESOLVBUS_LIVEENCODERCALLBACK Callback, void *Context)
+{
+    RESOLVBUS_RESULT Result = RESOLVBUS_OK;
+
+    if (Result == RESOLVBUS_OK) {
+        if ((Encoder->Phase == RESOLVBUS_LIVEENCODERPHASE_SUSPENDED) || Encoder->SuspendRequested) {
+            __FAIL(SUSPENDED);
+        } else if (Callback && ((Encoder->Phase == RESOLVBUS_LIVEENCODERPHASE_SUSPENDEDWITHTIMEOUT) || Encoder->SuspendWithTimeoutRequested)) {
+            __FAIL(SUSPENDED);
+        } else if (Encoder->Phase == RESOLVBUS_LIVEENCODERPHASE_SUSPENDEDWITHTIMEOUT) {
+            if (Encoder->PhaseTimeoutUs < Microseconds) {
+                Encoder->PhaseTimeoutUs = Microseconds;
+            }
+
+            Encoder->SuspendCallback = Callback;
+            Encoder->SuspendCallbackContext = Context;
+        } else {
+            bool WasIdle = __IsIdle(Encoder);
+
+            Encoder->SuspendWithTimeoutRequested = true;
+            if (Encoder->SuspendTimeoutUs < Microseconds) {
+                Encoder->SuspendTimeoutUs = Microseconds;
+            }
+
+            Encoder->SuspendCallback = Callback;
+            Encoder->SuspendCallbackContext = Context;
+
+            if (WasIdle) {
+                __WRAP(ResolVBus_LiveEncoder_HandleTimer(Encoder, 0));
+            }
+        }
+    }
+
+    return Result;
+}
+
+
 
 //---------------------------------------------------------------------------
 // PUBLIC METHODS
@@ -258,6 +295,16 @@ RESOLVBUS_RESULT ResolVBus_LiveEncoder_HandleTimer(RESOLVBUS_LIVEENCODER *Encode
         } else if (Encoder->Phase == RESOLVBUS_LIVEENCODERPHASE_SUSPENDEDWITHTIMEOUT) {
             if (PhaseIsTimedOut) {
                 Encoder->Phase = RESOLVBUS_LIVEENCODERPHASE_IDLE;
+
+                if (Encoder->SuspendCallback) {
+                    RESOLVBUS_LIVEENCODERCALLBACK Callback = Encoder->SuspendCallback;
+                    Encoder->SuspendCallback = NULL;
+
+                    void *Context = Encoder->SuspendCallbackContext;
+                    Encoder->SuspendCallbackContext = NULL;
+
+                    __WRAP(Callback(Encoder, Context));
+                }
             } else {
                 // wait for timeout or manual resume
                 break;
@@ -282,6 +329,9 @@ RESOLVBUS_RESULT ResolVBus_LiveEncoder_Suspend(RESOLVBUS_LIVEENCODER *Encoder)
             // nop
         } else if (Encoder->Phase == RESOLVBUS_LIVEENCODERPHASE_SUSPENDEDWITHTIMEOUT) {
             Encoder->Phase = RESOLVBUS_LIVEENCODERPHASE_SUSPENDED;
+
+            Encoder->SuspendCallback = NULL;
+            Encoder->SuspendCallbackContext = NULL;
         } else {
             bool WasIdle = __IsIdle(Encoder);
 
@@ -304,26 +354,20 @@ RESOLVBUS_RESULT ResolVBus_LiveEncoder_SuspendWithTimeout(RESOLVBUS_LIVEENCODER 
 
     __ASSERT_WITH(NULLPOINTER, Encoder);
 
-    if (Result == RESOLVBUS_OK) {
-        if (Encoder->Phase == RESOLVBUS_LIVEENCODERPHASE_SUSPENDEDWITHTIMEOUT) {
-            if (Encoder->PhaseTimeoutUs < Microseconds) {
-                Encoder->PhaseTimeoutUs = Microseconds;
-            }
-        } else if ((Encoder->Phase == RESOLVBUS_LIVEENCODERPHASE_SUSPENDED) || Encoder->SuspendRequested) {
-            __FAIL(SUSPENDED);
-        } else {
-            bool WasIdle = __IsIdle(Encoder);
+    __WRAP(__SuspendWithTimeout(Encoder, Microseconds, NULL, NULL));
 
-            Encoder->SuspendWithTimeoutRequested = true;
-            if (Encoder->SuspendTimeoutUs < Microseconds) {
-                Encoder->SuspendTimeoutUs = Microseconds;
-            }
+    return Result;
+}
 
-            if (WasIdle) {
-                __WRAP(ResolVBus_LiveEncoder_HandleTimer(Encoder, 0));
-            }
-        }
-    }
+
+RESOLVBUS_RESULT ResolVBus_LiveEncoder_SuspendWithTimeoutAndCallback(RESOLVBUS_LIVEENCODER *Encoder, uint32_t Microseconds, RESOLVBUS_LIVEENCODERCALLBACK Callback, void *Context)
+{
+    RESOLVBUS_RESULT Result = RESOLVBUS_OK;
+
+    __ASSERT_WITH(NULLPOINTER, Encoder);
+    __ASSERT_WITH(NULLPOINTER, Callback);
+
+    __WRAP(__SuspendWithTimeout(Encoder, Microseconds, Callback, Context));
 
     return Result;
 }
@@ -339,6 +383,8 @@ RESOLVBUS_RESULT ResolVBus_LiveEncoder_Resume(RESOLVBUS_LIVEENCODER *Encoder)
         Encoder->SuspendRequested = false;
         Encoder->SuspendWithTimeoutRequested = false;
         Encoder->SuspendTimeoutUs = 0;
+        Encoder->SuspendCallback = NULL;
+        Encoder->SuspendCallbackContext = NULL;
 
         if ((Encoder->Phase == RESOLVBUS_LIVEENCODERPHASE_SUSPENDED) || (Encoder->Phase == RESOLVBUS_LIVEENCODERPHASE_SUSPENDEDWITHTIMEOUT)) {
             Encoder->Phase = RESOLVBUS_LIVEENCODERPHASE_IDLE;

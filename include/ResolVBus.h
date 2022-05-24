@@ -237,6 +237,7 @@ typedef struct RESOLVBUS_LIVEDECODER RESOLVBUS_LIVEDECODER;
 //---------------------------------------------------------------------------
 
 typedef RESOLVBUS_RESULT (*RESOLVBUS_LIVEENCODERHANDLER)(RESOLVBUS_LIVEENCODER *Encoder, const RESOLVBUS_LIVEENCODEREVENT *Event);
+typedef RESOLVBUS_RESULT (*RESOLVBUS_LIVEENCODERCALLBACK)(RESOLVBUS_LIVEENCODER *Encoder, void *Context);
 typedef RESOLVBUS_RESULT (*RESOLVBUS_LIVEDECODERHANDLER)(RESOLVBUS_LIVEDECODER *Decoder, const RESOLVBUS_LIVEDECODEREVENT *Event);
 
 
@@ -348,6 +349,16 @@ struct RESOLVBUS_LIVEENCODER {
      * Requested suspend timeout.
      */
     uint32_t SuspendTimeoutUs;
+
+    /**
+     * Callback to be called after suspend with timeout has passed.
+     */
+    RESOLVBUS_LIVEENCODERCALLBACK SuspendCallback;
+
+    /**
+     * Context to pass as argument to suspend callback.
+     */
+    void *SuspendCallbackContext;
 
     /**
      * Current phase of the internal state machine.
@@ -736,13 +747,34 @@ RESOLVBUS_RESULT ResolVBus_LiveEncoder_Suspend(RESOLVBUS_LIVEENCODER *Encoder);
  * If the encoder is not idle, it will complete the currently running operation first.
  * After that it will enter a suspended state for the provided time. After that time has passed, the
  * encoder will automatically resume operation again. The encoder can be manually
- * resumed before the timeout has passed using `ResolVBus_LiveEncoder_Resume`.
+ * resumed before the timeout has passed by using `ResolVBus_LiveEncoder_Resume`.
  *
  * @param Encoder Encoder instance
  * @param Microseconds Amount of time after which the encoder automatically resumes operation
  * @returns RESOLVBUS_OK if no error occurred
  */
 RESOLVBUS_RESULT ResolVBus_LiveEncoder_SuspendWithTimeout(RESOLVBUS_LIVEENCODER *Encoder, uint32_t Microseconds);
+
+/**
+ * Suspend the encoder for the provided time, calling the callback after the time has passed.
+ *
+ * If the encoder is not idle, it will complete the currently running operation first.
+ * After that it will enter a suspended state for the provided time. After that time has passed, the
+ * encoder will call the provided callback and automatically resume operation again. The encoder
+ * can be manually resumed before the timeout has passed by using `ResolVBus_LiveEncoder_Resume`.
+ * In that case the callback is not called.
+ *
+ * This function will return `RESOLVBUS_ERROR_SUSPENDED` if the encoder is already flagged for
+ * or running in a suspended state. Calling `ResolVBus_LiveEncoder_Resume` directly before this
+ * function makes sure that the encoder is in a safe state.
+ *
+ * @param Encoder Encoder instance
+ * @param Microseconds Amount of time after which the encoder automatically resumes operation
+ * @param Callback Function to call after the timeout has passed
+ * @param Context Context to pass into the callback
+ * @returns RESOLVBUS_OK if no error occurred
+ */
+RESOLVBUS_RESULT ResolVBus_LiveEncoder_SuspendWithTimeoutAndCallback(RESOLVBUS_LIVEENCODER *Encoder, uint32_t Microseconds, RESOLVBUS_LIVEENCODERCALLBACK Callback, void *Context);
 
 /**
  * Resume operation of a suspended encoder.
