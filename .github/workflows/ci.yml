@@ -1,0 +1,29 @@
+name: Continuous Integration
+on: [push]
+jobs:
+  test-linux-x64:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Bootstrap
+      run: |
+        sudo apt-get update -y
+        sudo apt-get install -y ccache clang gcc-arm-none-eabi ninja-build
+        echo "embeddedPrefix = /usr/bin/arm-none-eabi-" > local.ninja
+    - name: Build
+      run: ninja
+    - name: Test
+      run: output/host/bin/ResolVBusTest
+  test-macos-x64:
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Bootstrap
+      run: |
+        brew update
+        brew install ccache ninja
+        echo "" > local.ninja
+    - name: Build
+      run: ninja hostTests
+    - name: Test
+      run: output/host/bin/ResolVBusTest

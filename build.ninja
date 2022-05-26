@@ -46,6 +46,8 @@ build $hostOutputDirname/bin/ResolVBusTest: linkHost $hostOutputDirname/tmp/src/
                                                      $hostOutputDirname/tmp/test/TestData.o $
                                                      $hostOutputDirname/tmp/test/TestMain.o $
 
+build hostTests: phony $hostOutputDirname/bin/ResolVBusTest
+
 build $embeddedOutputDirname/tmp/src/ResolVBusBase.o: compileEmbedded src/ResolVBusBase.c
 build $embeddedOutputDirname/tmp/src/ResolVBusLiveDecoder.o: compileEmbedded src/ResolVBusLiveDecoder.c
 build $embeddedOutputDirname/tmp/src/ResolVBusLiveEncoder.o: compileEmbedded src/ResolVBusLiveEncoder.c
