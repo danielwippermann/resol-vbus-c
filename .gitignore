@@ -1,4 +1,5 @@
 .vscode/
 output/
+.ninja_deps
 .ninja_log
 local.ninja
