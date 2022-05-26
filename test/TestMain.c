@@ -19,6 +19,14 @@
 // PRIVATE DEFINES
 //---------------------------------------------------------------------------
 
+#ifdef __APPLE__
+#define __FORMAT_D64 "%lld"
+#define __FORMAT_X64 "0x%llX"
+#else
+#define __FORMAT_D64 "%ld"
+#define __FORMAT_X64 "0x%lX"
+#endif
+
 
 
 //---------------------------------------------------------------------------
@@ -61,7 +69,7 @@ static RESOLVBUS_RESULT __TestAssertEql(void)
 
     __WRAP(AssertEql(123, "LeftValue123", 123, "RightValue123"));
 
-    __ASSERT_RESULT_EQL(UNKNOWN, "Expected values to equal\n  Left:  LeftValue123 = 123 (0x7b)\n  Right: RightValue234 = 234 (0xea)\n\nBacktrace:\n", AssertEql(123, "LeftValue123", 234, "RightValue234"));
+    __ASSERT_RESULT_EQL(UNKNOWN, "Expected values to equal\n  Left:  LeftValue123 = 123 (0x7B)\n  Right: RightValue234 = 234 (0xEA)\n\nBacktrace:\n", AssertEql(123, "LeftValue123", 234, "RightValue234"));
 
     return Result;
 }
@@ -127,7 +135,7 @@ RESOLVBUS_RESULT AssertEql(int64_t LeftValue, const char *LeftExpr, int64_t Righ
 
     if (LeftValue != RightValue) {
         static char Message [1024] = { 0 };
-        snprintf(Message, sizeof (Message), "Expected values to equal\n  Left:  %s = %lld (0x%llx)\n  Right: %s = %lld (0x%llx)", LeftExpr, LeftValue, LeftValue, RightExpr, RightValue, RightValue);
+        snprintf(Message, sizeof (Message), "Expected values to equal\n  Left:  %s = " __FORMAT_D64 " (" __FORMAT_X64 ")\n  Right: %s = " __FORMAT_D64 " (" __FORMAT_X64 ")", LeftExpr, LeftValue, LeftValue, RightExpr, RightValue, RightValue);
 
         Result = RESOLVBUS_ERROR_UNKNOWN;
         ResolVBus_ResetBacktrace(Message, "<see above>", __FILE__, __LINE__, __func__);
@@ -142,7 +150,7 @@ RESOLVBUS_RESULT AssertNotEql(int64_t LeftValue, const char *LeftExpr, int64_t R
 
     if (LeftValue == RightValue) {
         static char Message [1024] = { 0 };
-        snprintf(Message, sizeof (Message), "Expected values not to equal\n  Left:  %s = %lld (0x%llx)\n  Right: %s = %lld (0x%llx)", LeftExpr, LeftValue, LeftValue, RightExpr, RightValue, RightValue);
+        snprintf(Message, sizeof (Message), "Expected values not to equal\n  Left:  %s = " __FORMAT_D64 " (" __FORMAT_X64 ")\n  Right: %s = " __FORMAT_D64 " (" __FORMAT_X64 ")", LeftExpr, LeftValue, LeftValue, RightExpr, RightValue, RightValue);
 
         Result = RESOLVBUS_ERROR_UNKNOWN;
         ResolVBus_ResetBacktrace(Message, "<see above>", __FILE__, __LINE__, __func__);
