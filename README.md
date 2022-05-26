@@ -11,6 +11,7 @@ A C library for processing RESOL VBus data.
 ## Contributors
 
 - [Daniel Wippermann](https://github.com/danielwippermann)
+- [Rapp2](https://github.com/Rapp2)
 
 
 ## Legal Notices
