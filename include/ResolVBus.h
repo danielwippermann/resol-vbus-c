@@ -63,6 +63,7 @@ typedef enum RESOLVBUS_RESULT {
     RESOLVBUS_ERROR_INVALIDARGUMENT = 7,
     RESOLVBUS_ERROR_INVALIDCHECKSUM = 8,
     RESOLVBUS_ERROR_INVALIDSTATE = 9,
+    RESOLVBUS_ERROR_SUSPENDED = 10,
 } RESOLVBUS_RESULT;
 
 
@@ -236,6 +237,7 @@ typedef struct RESOLVBUS_LIVEDECODER RESOLVBUS_LIVEDECODER;
 //---------------------------------------------------------------------------
 
 typedef RESOLVBUS_RESULT (*RESOLVBUS_LIVEENCODERHANDLER)(RESOLVBUS_LIVEENCODER *Encoder, const RESOLVBUS_LIVEENCODEREVENT *Event);
+typedef RESOLVBUS_RESULT (*RESOLVBUS_LIVEENCODERCALLBACK)(RESOLVBUS_LIVEENCODER *Encoder, void *Context);
 typedef RESOLVBUS_RESULT (*RESOLVBUS_LIVEDECODERHANDLER)(RESOLVBUS_LIVEDECODER *Decoder, const RESOLVBUS_LIVEDECODEREVENT *Event);
 
 
@@ -347,6 +349,16 @@ struct RESOLVBUS_LIVEENCODER {
      * Requested suspend timeout.
      */
     uint32_t SuspendTimeoutUs;
+
+    /**
+     * Callback to be called after suspend with timeout has passed.
+     */
+    RESOLVBUS_LIVEENCODERCALLBACK SuspendCallback;
+
+    /**
+     * Context to pass as argument to suspend callback.
+     */
+    void *SuspendCallbackContext;
 
     /**
      * Current phase of the internal state machine.
@@ -735,13 +747,34 @@ RESOLVBUS_RESULT ResolVBus_LiveEncoder_Suspend(RESOLVBUS_LIVEENCODER *Encoder);
  * If the encoder is not idle, it will complete the currently running operation first.
  * After that it will enter a suspended state for the provided time. After that time has passed, the
  * encoder will automatically resume operation again. The encoder can be manually
- * resumed before the timeout has passed using `ResolVBus_LiveEncoder_Resume`.
+ * resumed before the timeout has passed by using `ResolVBus_LiveEncoder_Resume`.
  *
  * @param Encoder Encoder instance
  * @param Microseconds Amount of time after which the encoder automatically resumes operation
  * @returns RESOLVBUS_OK if no error occurred
  */
 RESOLVBUS_RESULT ResolVBus_LiveEncoder_SuspendWithTimeout(RESOLVBUS_LIVEENCODER *Encoder, uint32_t Microseconds);
+
+/**
+ * Suspend the encoder for the provided time, calling the callback after the time has passed.
+ *
+ * If the encoder is not idle, it will complete the currently running operation first.
+ * After that it will enter a suspended state for the provided time. After that time has passed, the
+ * encoder will call the provided callback and automatically resume operation again. The encoder
+ * can be manually resumed before the timeout has passed by using `ResolVBus_LiveEncoder_Resume`.
+ * In that case the callback is not called.
+ *
+ * This function will return `RESOLVBUS_ERROR_SUSPENDED` if the encoder is already flagged for
+ * or running in a suspended state. Calling `ResolVBus_LiveEncoder_Resume` directly before this
+ * function makes sure that the encoder is in a safe state.
+ *
+ * @param Encoder Encoder instance
+ * @param Microseconds Amount of time after which the encoder automatically resumes operation
+ * @param Callback Function to call after the timeout has passed
+ * @param Context Context to pass into the callback
+ * @returns RESOLVBUS_OK if no error occurred
+ */
+RESOLVBUS_RESULT ResolVBus_LiveEncoder_SuspendWithTimeoutAndCallback(RESOLVBUS_LIVEENCODER *Encoder, uint32_t Microseconds, RESOLVBUS_LIVEENCODERCALLBACK Callback, void *Context);
 
 /**
  * Resume operation of a suspended encoder.
@@ -755,6 +788,9 @@ RESOLVBUS_RESULT ResolVBus_LiveEncoder_Resume(RESOLVBUS_LIVEENCODER *Encoder);
  * Queue a VBus packet header into the transmit buffer.
  *
  * See `ResolVBus_LiveEncoder_HandleTimer` for transmit buffer handling details.
+ *
+ * This function will return `RESOLVBUS_ERROR_SUSPENDED` if the encoder is already flagged for
+ * or running in a suspended state.
  *
  * @param Encoder Encoder instance
  * @param DestinationAddress Destination address of the packet
@@ -771,6 +807,9 @@ RESOLVBUS_RESULT ResolVBus_LiveEncoder_QueuePacketHeader(RESOLVBUS_LIVEENCODER *
  *
  * See `ResolVBus_LiveEncoder_HandleTimer` for transmit buffer handling details.
  *
+ * This function will return `RESOLVBUS_ERROR_SUSPENDED` if the encoder is already flagged for
+ * or running in a suspended state.
+ *
  * @param Encoder Encoder instance
  * @param FourBytes Buffer containing the four bytes payload of the frame
  * @returns RESOLVBUS_OK if no error occurred
@@ -784,6 +823,9 @@ RESOLVBUS_RESULT ResolVBus_LiveEncoder_QueuePacketFrame(RESOLVBUS_LIVEENCODER *E
  *
  * See `ResolVBus_LiveEncoder_HandleTimer` for transmit buffer handling details.
  *
+ * This function will return `RESOLVBUS_ERROR_SUSPENDED` if the encoder is already flagged for
+ * or running in a suspended state.
+ *
  * @param Encoder Encoder instance
  * @param Bytes Buffer containing the payload of the frames
  * @param Length Length of the `Bytes` buffer
@@ -795,6 +837,9 @@ RESOLVBUS_RESULT ResolVBus_LiveEncoder_QueuePacketFrames(RESOLVBUS_LIVEENCODER *
  * Queue a VBus datagram into the transmit buffer.
  *
  * See `ResolVBus_LiveEncoder_HandleTimer` for transmit buffer handling details.
+ *
+ * This function will return `RESOLVBUS_ERROR_SUSPENDED` if the encoder is already flagged for
+ * or running in a suspended state.
  *
  * @param Encoder Encoder instance
  * @param DestinationAddress Destination address of the datagram
@@ -812,6 +857,9 @@ RESOLVBUS_RESULT ResolVBus_LiveEncoder_QueueDatagram(RESOLVBUS_LIVEENCODER *Enco
  *
  * See `ResolVBus_LiveEncoder_HandleTimer` for transmit buffer handling details.
  *
+ * This function will return `RESOLVBUS_ERROR_SUSPENDED` if the encoder is already flagged for
+ * or running in a suspended state.
+ *
  * @param Encoder Encoder instance
  * @param DestinationAddress Destination address of the telegram
  * @param SourceAddress Source address of the telegram
@@ -827,6 +875,9 @@ RESOLVBUS_RESULT ResolVBus_LiveEncoder_QueueTelegramHeader(RESOLVBUS_LIVEENCODER
  *
  * See `ResolVBus_LiveEncoder_HandleTimer` for transmit buffer handling details.
  *
+ * This function will return `RESOLVBUS_ERROR_SUSPENDED` if the encoder is already flagged for
+ * or running in a suspended state.
+ *
  * @param Encoder Encoder instance
  * @param SevenBytes Buffer containing the seven bytes payload of the frame
  * @returns RESOLVBUS_OK if no error occurred
@@ -839,6 +890,9 @@ RESOLVBUS_RESULT ResolVBus_LiveEncoder_QueueTelegramFrame(RESOLVBUS_LIVEENCODER 
  * If `Length` is not a multiple of seven, the last frame is padded with 0xFF.
  *
  * See `ResolVBus_LiveEncoder_HandleTimer` for transmit buffer handling details.
+ *
+ * This function will return `RESOLVBUS_ERROR_SUSPENDED` if the encoder is already flagged for
+ * or running in a suspended state.
  *
  * @param Encoder Encoder instance
  * @param Bytes Buffer containing the payload of the frames

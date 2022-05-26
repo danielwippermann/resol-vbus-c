@@ -49,11 +49,17 @@
 // PRIVATE TYPEDEFS
 //---------------------------------------------------------------------------
 
+typedef struct __CALLBACKCONTEXT __CALLBACKCONTEXT;
+
 
 
 //---------------------------------------------------------------------------
 // PRIVATE DATA TYPES
 //---------------------------------------------------------------------------
+
+struct __CALLBACKCONTEXT {
+    RESOLVBUS_LIVEENCODER *Encoder;
+};
 
 
 
@@ -147,6 +153,58 @@ static RESOLVBUS_RESULT __TestHandleTimer(void)
 }
 
 
+static RESOLVBUS_RESULT __TestQueueXxxWhileSuspended(void)
+{
+    RESOLVBUS_RESULT Result = RESOLVBUS_OK;
+
+    __PREAMBLE();
+
+    const uint8_t FourBytes [4] = { 0 };
+
+    __WRAP(ResolVBus_LiveEncoder_QueuePacketFrame(Encoder, FourBytes));
+    __WRAP(ResolVBus_LiveEncoder_Suspend(Encoder));
+
+    __ASSERT_EQL(RESOLVBUS_LIVEENCODERPHASE_IDLE, Encoder->Phase);
+    __ASSERT_EQL(true, Encoder->SuspendRequested);
+
+    __ASSERT_RESULT_EQL(SUSPENDED, NULL, ResolVBus_LiveEncoder_QueuePacketFrame(Encoder, FourBytes));
+
+    __WRAP(ResolVBus_LiveEncoder_HandleTimer(Encoder, 10000));
+    __WRAP(ResolVBus_LiveEncoder_HandleTimer(Encoder, 10000));
+
+    __ASSERT_EQL(RESOLVBUS_LIVEENCODERPHASE_SUSPENDED, Encoder->Phase);
+    __ASSERT_EQL(false, Encoder->SuspendRequested);
+
+    __ASSERT_RESULT_EQL(SUSPENDED, NULL, ResolVBus_LiveEncoder_QueuePacketFrame(Encoder, FourBytes));
+
+    __WRAP(ResolVBus_LiveEncoder_Resume(Encoder));
+    __WRAP(ResolVBus_LiveEncoder_QueuePacketFrame(Encoder, FourBytes));
+    __WRAP(ResolVBus_LiveEncoder_SuspendWithTimeout(Encoder, 100000));
+
+    __ASSERT_EQL(RESOLVBUS_LIVEENCODERPHASE_IDLE, Encoder->Phase);
+    __ASSERT_EQL(true, Encoder->SuspendWithTimeoutRequested);
+
+    __ASSERT_RESULT_EQL(SUSPENDED, NULL, ResolVBus_LiveEncoder_QueuePacketFrame(Encoder, FourBytes));
+
+    __WRAP(ResolVBus_LiveEncoder_HandleTimer(Encoder, 10000));
+    __WRAP(ResolVBus_LiveEncoder_HandleTimer(Encoder, 10000));
+
+    __ASSERT_EQL(RESOLVBUS_LIVEENCODERPHASE_SUSPENDEDWITHTIMEOUT, Encoder->Phase);
+    __ASSERT_EQL(false, Encoder->SuspendWithTimeoutRequested);
+
+    __ASSERT_RESULT_EQL(SUSPENDED, NULL, ResolVBus_LiveEncoder_QueuePacketFrame(Encoder, FourBytes));
+
+    __WRAP(ResolVBus_LiveEncoder_HandleTimer(Encoder, 0));
+
+    __ASSERT_EQL(RESOLVBUS_LIVEENCODERPHASE_SUSPENDEDWITHTIMEOUT, Encoder->Phase);
+    __ASSERT_EQL(false, Encoder->SuspendWithTimeoutRequested);
+
+    __ASSERT_RESULT_EQL(SUSPENDED, NULL, ResolVBus_LiveEncoder_QueuePacketFrame(Encoder, FourBytes));
+
+    return Result;
+}
+
+
 static RESOLVBUS_RESULT __TestQueuePacketFrames(void)
 {
     RESOLVBUS_RESULT Result = RESOLVBUS_OK;
@@ -233,6 +291,269 @@ static RESOLVBUS_RESULT __TestQueueTelegramXxx(void)
     __WRAP(ResolVBus_LiveEncoder_HandleTimer(Encoder, 40000));
 
     __ASSERT_LOG_EQL("Event = IDLE\n");
+
+    return Result;
+}
+
+
+static RESOLVBUS_RESULT __TestSuspendAndResume(void)
+{
+    RESOLVBUS_RESULT Result = RESOLVBUS_OK;
+
+    __PREAMBLE();
+
+    const uint8_t FourBytes [4] = { 0 };
+
+    // Scenario 1: calling `ResolVBus_LiveEncoder_Resume` while the encoder is idle does nothing
+
+    __ASSERT_EQL(Encoder->SuspendRequested, false);
+    __ASSERT_EQL(Encoder->SuspendWithTimeoutRequested, false);
+    __ASSERT_EQL(Encoder->Phase, RESOLVBUS_LIVEENCODERPHASE_IDLE);
+
+    __WRAP(ResolVBus_LiveEncoder_Resume(Encoder));
+
+    __ASSERT_EQL(Encoder->SuspendRequested, false);
+    __ASSERT_EQL(Encoder->SuspendWithTimeoutRequested, false);
+    __ASSERT_EQL(Encoder->Phase, RESOLVBUS_LIVEENCODERPHASE_IDLE);
+
+    // Scenario 2: multiple calls to `ResolVBus_LiveEncoder_SuspendWithTimeout` while the encoder
+    // is idle choose the longest provided timeout
+
+    __WRAP(ResolVBus_LiveEncoder_QueuePacketFrame(Encoder, FourBytes));
+
+    __ASSERT_EQL(Encoder->SuspendRequested, false);
+    __ASSERT_EQL(Encoder->SuspendWithTimeoutRequested, false);
+    __ASSERT_EQL(Encoder->Phase, RESOLVBUS_LIVEENCODERPHASE_IDLE);
+
+    __WRAP(ResolVBus_LiveEncoder_SuspendWithTimeout(Encoder, 100));
+
+    __ASSERT_EQL(Encoder->SuspendWithTimeoutRequested, true);
+    __ASSERT_EQL(Encoder->SuspendTimeoutUs, 100);
+    __ASSERT_EQL(Encoder->Phase, RESOLVBUS_LIVEENCODERPHASE_IDLE);
+
+    __WRAP(ResolVBus_LiveEncoder_SuspendWithTimeout(Encoder, 200));
+
+    __ASSERT_EQL(Encoder->SuspendWithTimeoutRequested, true);
+    __ASSERT_EQL(Encoder->SuspendTimeoutUs, 200);
+    __ASSERT_EQL(Encoder->Phase, RESOLVBUS_LIVEENCODERPHASE_IDLE);
+
+    __WRAP(ResolVBus_LiveEncoder_SuspendWithTimeout(Encoder, 100));
+
+    __ASSERT_EQL(Encoder->SuspendWithTimeoutRequested, true);
+    __ASSERT_EQL(Encoder->SuspendTimeoutUs, 200);
+    __ASSERT_EQL(Encoder->Phase, RESOLVBUS_LIVEENCODERPHASE_IDLE);
+
+    __WRAP(ResolVBus_LiveEncoder_Resume(Encoder));
+
+    __ASSERT_EQL(Encoder->SuspendRequested, false);
+    __ASSERT_EQL(Encoder->SuspendWithTimeoutRequested, false);
+    __ASSERT_EQL(Encoder->Phase, RESOLVBUS_LIVEENCODERPHASE_IDLE);
+
+    __WRAP(ResolVBus_LiveEncoder_HandleTimer(Encoder, 10000));
+    __WRAP(ResolVBus_LiveEncoder_HandleTimer(Encoder, 10000));
+
+    // Scenario 3: calling `ResolVBus_LiveEncoder_SuspendWithTimeout` while the encoder is already
+    // suspended with a timeout, applies the new timeout only if it is longer than the remaining
+    // active timeout.
+
+    __ASSERT_EQL(Encoder->SuspendRequested, false);
+    __ASSERT_EQL(Encoder->SuspendWithTimeoutRequested, false);
+    __ASSERT_EQL(Encoder->Phase, RESOLVBUS_LIVEENCODERPHASE_IDLE);
+
+    __WRAP(ResolVBus_LiveEncoder_SuspendWithTimeout(Encoder, 100));
+
+    __ASSERT_EQL(Encoder->SuspendWithTimeoutRequested, false);
+    __ASSERT_EQL(Encoder->Phase, RESOLVBUS_LIVEENCODERPHASE_SUSPENDEDWITHTIMEOUT);
+    __ASSERT_EQL(Encoder->PhaseTimeoutUs, 100);
+
+    __WRAP(ResolVBus_LiveEncoder_HandleTimer(Encoder, 50));
+
+    __ASSERT_EQL(Encoder->SuspendWithTimeoutRequested, false);
+    __ASSERT_EQL(Encoder->Phase, RESOLVBUS_LIVEENCODERPHASE_SUSPENDEDWITHTIMEOUT);
+    __ASSERT_EQL(Encoder->PhaseTimeoutUs, 50);
+
+    __WRAP(ResolVBus_LiveEncoder_SuspendWithTimeout(Encoder, 100));
+
+    __ASSERT_EQL(Encoder->SuspendWithTimeoutRequested, false);
+    __ASSERT_EQL(Encoder->Phase, RESOLVBUS_LIVEENCODERPHASE_SUSPENDEDWITHTIMEOUT);
+    __ASSERT_EQL(Encoder->PhaseTimeoutUs, 100);
+
+    __WRAP(ResolVBus_LiveEncoder_SuspendWithTimeout(Encoder, 50));
+
+    __ASSERT_EQL(Encoder->SuspendWithTimeoutRequested, false);
+    __ASSERT_EQL(Encoder->Phase, RESOLVBUS_LIVEENCODERPHASE_SUSPENDEDWITHTIMEOUT);
+    __ASSERT_EQL(Encoder->PhaseTimeoutUs, 100);
+
+    // Scenario 4: calling `ResolVBus_LiveEncoder_SuspendWithTimeout` while the encoder is already
+    // suspended without a timeout, returns an error
+
+    __WRAP(ResolVBus_LiveEncoder_Resume(Encoder));
+    __WRAP(ResolVBus_LiveEncoder_Suspend(Encoder));
+
+    __ASSERT_EQL(Encoder->SuspendRequested, false);
+    __ASSERT_EQL(Encoder->SuspendWithTimeoutRequested, false);
+    __ASSERT_EQL(Encoder->Phase, RESOLVBUS_LIVEENCODERPHASE_SUSPENDED);
+
+    __ASSERT_RESULT_EQL(SUSPENDED, NULL, ResolVBus_LiveEncoder_SuspendWithTimeout(Encoder, 100));
+
+    __WRAP(ResolVBus_LiveEncoder_HandleTimer(Encoder, 0));
+
+    __ASSERT_EQL(Encoder->SuspendRequested, false);
+    __ASSERT_EQL(Encoder->SuspendWithTimeoutRequested, false);
+    __ASSERT_EQL(Encoder->Phase, RESOLVBUS_LIVEENCODERPHASE_SUSPENDED);
+
+    __ASSERT_RESULT_EQL(SUSPENDED, NULL, ResolVBus_LiveEncoder_SuspendWithTimeout(Encoder, 100));
+
+    // Scenario 5: calling `ResolVBus_LiveEncoder_Suspend` while the encoder is already suspended
+    // with a timeout removes that timeout
+
+    __WRAP(ResolVBus_LiveEncoder_Resume(Encoder));
+    __WRAP(ResolVBus_LiveEncoder_QueuePacketFrame(Encoder, FourBytes));
+    __WRAP(ResolVBus_LiveEncoder_SuspendWithTimeout(Encoder, 100));
+
+    __ASSERT_EQL(Encoder->SuspendRequested, false);
+    __ASSERT_EQL(Encoder->SuspendWithTimeoutRequested, true);
+    __ASSERT_EQL(Encoder->SuspendTimeoutUs, 100);
+    __ASSERT_EQL(Encoder->Phase, RESOLVBUS_LIVEENCODERPHASE_IDLE);
+
+    __WRAP(ResolVBus_LiveEncoder_Suspend(Encoder));
+
+    __ASSERT_EQL(Encoder->SuspendRequested, true);
+    __ASSERT_EQL(Encoder->SuspendWithTimeoutRequested, false);
+    __ASSERT_EQL(Encoder->Phase, RESOLVBUS_LIVEENCODERPHASE_IDLE);
+
+    __WRAP(ResolVBus_LiveEncoder_HandleTimer(Encoder, 10000));
+    __WRAP(ResolVBus_LiveEncoder_HandleTimer(Encoder, 10000));
+    __WRAP(ResolVBus_LiveEncoder_Resume(Encoder));
+
+    __ASSERT_EQL(Encoder->Phase, RESOLVBUS_LIVEENCODERPHASE_IDLE);
+
+    __WRAP(ResolVBus_LiveEncoder_SuspendWithTimeout(Encoder, 100));
+
+    __ASSERT_EQL(Encoder->SuspendRequested, false);
+    __ASSERT_EQL(Encoder->SuspendWithTimeoutRequested, false);
+    __ASSERT_EQL(Encoder->Phase, RESOLVBUS_LIVEENCODERPHASE_SUSPENDEDWITHTIMEOUT);
+    __ASSERT_EQL(Encoder->PhaseTimeoutUs, 100);
+
+    __WRAP(ResolVBus_LiveEncoder_Suspend(Encoder));
+
+    __ASSERT_EQL(Encoder->SuspendRequested, false);
+    __ASSERT_EQL(Encoder->SuspendWithTimeoutRequested, false);
+    __ASSERT_EQL(Encoder->Phase, RESOLVBUS_LIVEENCODERPHASE_SUSPENDED);
+
+    return Result;
+}
+
+
+static RESOLVBUS_RESULT __SuspendCallback(RESOLVBUS_LIVEENCODER *Encoder, void *UntypedContext)
+{
+    RESOLVBUS_RESULT Result = RESOLVBUS_OK;
+
+    if (UntypedContext) {
+        __CALLBACKCONTEXT *Context = UntypedContext;
+
+        if (Context->Encoder == Encoder) {
+            __APPEND_LOG("__SuspendCallback(Encoder, Context)\n");
+        } else {
+            __APPEND_LOG("__SuspendCallback(Encoder, UnknownContext)\n");
+        }
+    } else {
+        __APPEND_LOG("__SuspendCallback(Encoder, NULL)\n");
+    }
+
+    return Result;
+}
+
+
+static RESOLVBUS_RESULT __TestSuspendWithTimeoutAndCallback(void)
+{
+    RESOLVBUS_RESULT Result = RESOLVBUS_OK;
+
+    __PREAMBLE();
+
+    const uint8_t FourBytes [4] = { 0 };
+
+    __CALLBACKCONTEXT Context = {
+        .Encoder = Encoder,
+    };
+
+    // Scenario 1: calling the function while the encoder is idle suspends the encoder
+
+    __ASSERT_EQL(Encoder->SuspendRequested, false);
+    __ASSERT_EQL(Encoder->SuspendWithTimeoutRequested, false);
+    __ASSERT_EQL(Encoder->Phase, RESOLVBUS_LIVEENCODERPHASE_IDLE);
+
+    __WRAP(ResolVBus_LiveEncoder_SuspendWithTimeoutAndCallback(Encoder, 100, __SuspendCallback, &Context));
+
+    __ASSERT_EQL(Encoder->SuspendRequested, false);
+    __ASSERT_EQL(Encoder->SuspendWithTimeoutRequested, false);
+    __ASSERT_EQL((size_t) Encoder->SuspendCallback, (size_t) __SuspendCallback);
+    __ASSERT_EQL((size_t) Encoder->SuspendCallbackContext, (size_t) &Context);
+    __ASSERT_EQL(Encoder->Phase, RESOLVBUS_LIVEENCODERPHASE_SUSPENDEDWITHTIMEOUT);
+    __ASSERT_EQL(Encoder->PhaseTimeoutUs, 100);
+    __ASSERT_LOG_EQL("");
+
+    // Scenario 2: letting the timeout elapse calls the callback
+
+    __WRAP(ResolVBus_LiveEncoder_HandleTimer(Encoder, 100));
+    __ASSERT_LOG_EQL("__SuspendCallback(Encoder, Context)\nEvent = IDLE\n");
+
+    // Scenario 3: like scenario 1, but with data in transmit buffer
+
+    __WRAP(ResolVBus_LiveEncoder_QueuePacketFrame(Encoder, FourBytes));
+    __WRAP(ResolVBus_LiveEncoder_SuspendWithTimeoutAndCallback(Encoder, 1000, __SuspendCallback, __HandlerLog));
+
+    __ASSERT_EQL(Encoder->SuspendRequested, false);
+    __ASSERT_EQL(Encoder->SuspendWithTimeoutRequested, true);
+    __ASSERT_EQL(Encoder->SuspendTimeoutUs, 1000);
+    __ASSERT_EQL((size_t) Encoder->SuspendCallback, (size_t) __SuspendCallback);
+    __ASSERT_EQL((size_t) Encoder->SuspendCallbackContext, (size_t) __HandlerLog);
+    __ASSERT_EQL(Encoder->Phase, RESOLVBUS_LIVEENCODERPHASE_IDLE);
+    __ASSERT_LOG_EQL("");
+
+    __WRAP(ResolVBus_LiveEncoder_HandleTimer(Encoder, 0));
+    __WRAP(ResolVBus_LiveEncoder_HandleTimer(Encoder, 10000));
+
+    __DLOG("PhaseTimeoutUs = %d", Encoder->PhaseTimeoutUs);
+
+    __ASSERT_EQL(Encoder->Phase, RESOLVBUS_LIVEENCODERPHASE_SUSPENDEDWITHTIMEOUT);
+    __ASSERT_EQL(Encoder->PhaseTimeoutUs, 250);
+    __ASSERT_LOG_EQL("Event = TRANSMIT, Data = 0x00 0x00 0x00 0x00 0x00 0x7F\n");
+
+    // Scenario 4: resuming timeout does not call callback
+
+    __WRAP(ResolVBus_LiveEncoder_Resume(Encoder));
+
+    __ASSERT_EQL(Encoder->Phase, RESOLVBUS_LIVEENCODERPHASE_IDLE);
+    __ASSERT_LOG_EQL("");
+
+    // Scenario 5: like scenario 1, but with NULL as context
+
+    __WRAP(ResolVBus_LiveEncoder_SuspendWithTimeoutAndCallback(Encoder, 1000, __SuspendCallback, NULL));
+
+    __ASSERT_EQL(Encoder->SuspendRequested, false);
+    __ASSERT_EQL(Encoder->SuspendWithTimeoutRequested, false);
+    __ASSERT_EQL((size_t) Encoder->SuspendCallback, (size_t) __SuspendCallback);
+    __ASSERT_EQL((size_t) Encoder->SuspendCallbackContext, (size_t) NULL);
+    __ASSERT_EQL(Encoder->Phase, RESOLVBUS_LIVEENCODERPHASE_SUSPENDEDWITHTIMEOUT);
+    __ASSERT_EQL(Encoder->PhaseTimeoutUs, 1000);
+    __ASSERT_LOG_EQL("");
+
+    // Scenario 6: suspending again with a callback returns an error
+
+    __ASSERT_RESULT_EQL(SUSPENDED, NULL, ResolVBus_LiveEncoder_SuspendWithTimeoutAndCallback(Encoder, 1000, __SuspendCallback, NULL));
+
+    // Scenario 7: suspending again without a callback removes the callback
+
+    __WRAP(ResolVBus_LiveEncoder_SuspendWithTimeout(Encoder, 1000));
+
+    __ASSERT_EQL(Encoder->SuspendRequested, false);
+    __ASSERT_EQL(Encoder->SuspendWithTimeoutRequested, false);
+    __ASSERT_EQL((size_t) Encoder->SuspendCallback, (size_t) NULL);
+    __ASSERT_EQL((size_t) Encoder->SuspendCallbackContext, (size_t) NULL);
+    __ASSERT_EQL(Encoder->Phase, RESOLVBUS_LIVEENCODERPHASE_SUSPENDEDWITHTIMEOUT);
+    __ASSERT_EQL(Encoder->PhaseTimeoutUs, 1000);
+    __ASSERT_LOG_EQL("");
 
     return Result;
 }
@@ -420,31 +741,7 @@ static RESOLVBUS_RESULT __IntegrationTest(void)
     __ASSERT_EQL(Encoder->SuspendWithTimeoutRequested, false);
     __ASSERT_EQL(Encoder->Phase, RESOLVBUS_LIVEENCODERPHASE_IDLE);
 
-    __WRAP(ResolVBus_LiveEncoder_SuspendWithTimeout(Encoder, 100));
-
-    __ASSERT_EQL(Encoder->BufferReadIndex, 0);
-    __ASSERT_EQL(Encoder->BufferWriteIndex, 0);
-    __ASSERT_EQL(Encoder->SuspendWithTimeoutRequested, true);
-    __ASSERT_EQL(Encoder->SuspendTimeoutUs, 100);
-    __ASSERT_EQL(Encoder->Phase, RESOLVBUS_LIVEENCODERPHASE_IDLE);
-
     __WRAP(ResolVBus_LiveEncoder_SuspendWithTimeout(Encoder, 200));
-
-    __ASSERT_EQL(Encoder->BufferReadIndex, 0);
-    __ASSERT_EQL(Encoder->BufferWriteIndex, 0);
-    __ASSERT_EQL(Encoder->SuspendWithTimeoutRequested, true);
-    __ASSERT_EQL(Encoder->SuspendTimeoutUs, 200);
-    __ASSERT_EQL(Encoder->Phase, RESOLVBUS_LIVEENCODERPHASE_IDLE);
-
-    __WRAP(ResolVBus_LiveEncoder_SuspendWithTimeout(Encoder, 100));
-
-    __ASSERT_EQL(Encoder->BufferReadIndex, 0);
-    __ASSERT_EQL(Encoder->BufferWriteIndex, 0);
-    __ASSERT_EQL(Encoder->SuspendWithTimeoutRequested, true);
-    __ASSERT_EQL(Encoder->SuspendTimeoutUs, 200);
-    __ASSERT_EQL(Encoder->Phase, RESOLVBUS_LIVEENCODERPHASE_IDLE);
-
-    __WRAP(ResolVBus_LiveEncoder_HandleTimer(Encoder, 0));
 
     __ASSERT_LOG_EQL("");
     __ASSERT_EQL(Encoder->BufferReadIndex, 0);
@@ -479,8 +776,6 @@ static RESOLVBUS_RESULT __IntegrationTest(void)
     __ASSERT_LOG_EQL("Event = IDLE\n");
     __ASSERT_EQL(Encoder->Phase, RESOLVBUS_LIVEENCODERPHASE_IDLE);
 
-    // __FAIL(NYI);
-
     return Result;
 }
 
@@ -496,8 +791,11 @@ RESOLVBUS_RESULT RunTestSuite_LiveEncoder(void)
 
     __WRAP(__TestInitialize());
     __WRAP(__TestHandleTimer());
+    __WRAP(__TestQueueXxxWhileSuspended());
     __WRAP(__TestQueuePacketFrames());
     __WRAP(__TestQueueTelegramXxx());
+    __WRAP(__TestSuspendAndResume());
+    __WRAP(__TestSuspendWithTimeoutAndCallback());
     __WRAP(__IntegrationTest());
 
     return Result;
