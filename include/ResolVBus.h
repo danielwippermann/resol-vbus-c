@@ -863,7 +863,7 @@ RESOLVBUS_RESULT ResolVBus_LiveEncoder_QueueDatagram(RESOLVBUS_LIVEENCODER *Enco
  * @param Encoder Encoder instance
  * @param DestinationAddress Destination address of the telegram
  * @param SourceAddress Source address of the telegram
- * @param MinorVersion Minor protocol version of the telegram (major version will always be 0x10)
+ * @param MinorVersion Minor protocol version of the telegram (major version will always be 0x30)
  * @param Command Command of the telegram
  * @param FrameCount Frame count of the telegram
  * @returns RESOLVBUS_OK if no error occurred
