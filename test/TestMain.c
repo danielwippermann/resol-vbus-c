@@ -136,6 +136,21 @@ RESOLVBUS_RESULT AssertEql(int64_t LeftValue, const char *LeftExpr, int64_t Righ
     return Result;
 }
 
+RESOLVBUS_RESULT AssertNotEql(int64_t LeftValue, const char *LeftExpr, int64_t RightValue, const char *RightExpr)
+{
+    RESOLVBUS_RESULT Result = RESOLVBUS_OK;
+
+    if (LeftValue == RightValue) {
+        static char Message [1024] = { 0 };
+        snprintf(Message, sizeof (Message), "Expected values not to equal\n  Left:  %s = %lld (0x%llx)\n  Right: %s = %lld (0x%llx)", LeftExpr, LeftValue, LeftValue, RightExpr, RightValue, RightValue);
+
+        Result = RESOLVBUS_ERROR_UNKNOWN;
+        ResolVBus_ResetBacktrace(Message, "<see above>", __FILE__, __LINE__, __func__);
+    }
+
+    return Result;
+}
+
 
 RESOLVBUS_RESULT AssertStringEql(const char *LeftValue, const char *LeftExpr, const char *RightValue, const char *RightExpr)
 {
