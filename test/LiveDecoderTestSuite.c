@@ -15,9 +15,9 @@
 //---------------------------------------------------------------------------
 
 #define __PREAMBLE() \
-    RESOLVBUS_LIVEDECODER DecoderLocal = {}; \
+    RESOLVBUS_LIVEDECODER DecoderLocal = RESOLVBUS_LIVEDECODER_INITIALIZER; \
     RESOLVBUS_LIVEDECODER *Decoder = &DecoderLocal; \
-    uint8_t FrameDataBufferLocal [512] = {}; \
+    uint8_t FrameDataBufferLocal [512] = { 0 }; \
     __WRAP(ResolVBus_LiveDecoder_Initialize(Decoder, FrameDataBufferLocal, sizeof (FrameDataBufferLocal), __Handler)); \
     __HandlerLog [0] = 0; \
 
@@ -101,9 +101,9 @@ static RESOLVBUS_RESULT __TestDecodeShortFrameDataBuffer(void)
 {
     RESOLVBUS_RESULT Result = RESOLVBUS_OK;
 
-    RESOLVBUS_LIVEDECODER DecoderLocal = {};
+    RESOLVBUS_LIVEDECODER DecoderLocal = RESOLVBUS_LIVEDECODER_INITIALIZER;
     RESOLVBUS_LIVEDECODER *Decoder = &DecoderLocal;
-    uint8_t FrameDataBufferLocal [256] = {};
+    uint8_t FrameDataBufferLocal [256] = { 0 };
     __WRAP(ResolVBus_LiveDecoder_Initialize(Decoder, FrameDataBufferLocal, 2, __Handler));
     __HandlerLog [0] = 0;
     __ASSERT_EQL(Decoder->Event.FrameDataBufferLength, 2);

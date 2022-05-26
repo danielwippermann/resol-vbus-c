@@ -36,6 +36,10 @@
     ((sizeof (__Type__) + 3) >> 2)
 
 
+#define RESOLVBUS_LIVEENCODER_INITIALIZER { .BufferLength = 0, }
+#define RESOLVBUS_LIVEDECODER_INITIALIZER { .BufferIndex = 0, }
+
+
 
 //---------------------------------------------------------------------------
 // PUBLIC TYPEDEFS
