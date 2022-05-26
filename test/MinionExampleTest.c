@@ -101,7 +101,7 @@ RESOLVBUS_RESULT RunTest_MinionExample(void)
 {
     RESOLVBUS_RESULT Result = RESOLVBUS_OK;
 
-    __MINION Minion = { 0 };
+    __MINION Minion = {};
 
     __WRAP(__Initialize(&Minion));
 

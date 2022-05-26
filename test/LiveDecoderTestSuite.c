@@ -15,9 +15,9 @@
 //---------------------------------------------------------------------------
 
 #define __PREAMBLE() \
-    RESOLVBUS_LIVEDECODER DecoderLocal = { 0 }; \
+    RESOLVBUS_LIVEDECODER DecoderLocal = {}; \
     RESOLVBUS_LIVEDECODER *Decoder = &DecoderLocal; \
-    uint8_t FrameDataBufferLocal [512] = { 0 }; \
+    uint8_t FrameDataBufferLocal [512] = {}; \
     __WRAP(ResolVBus_LiveDecoder_Initialize(Decoder, FrameDataBufferLocal, sizeof (FrameDataBufferLocal), __Handler)); \
     __HandlerLog [0] = 0; \
 

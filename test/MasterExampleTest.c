@@ -101,7 +101,7 @@ RESOLVBUS_RESULT RunTest_MasterExample(void)
 {
     RESOLVBUS_RESULT Result = RESOLVBUS_OK;
 
-    __MASTER Master = { 0 };
+    __MASTER Master = {};
 
     __WRAP(__Initialize(&Master));
 

@@ -266,7 +266,7 @@ int main(int argc, char **argv)
 {
     RESOLVBUS_RESULT Result = RESOLVBUS_OK;
 
-    __MASTER Master = { 0 };
+    __MASTER Master = {};
 
     if (Result == RESOLVBUS_OK) {
         Result = __Initialize(&Master);
