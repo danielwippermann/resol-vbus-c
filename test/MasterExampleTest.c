@@ -101,7 +101,10 @@ RESOLVBUS_RESULT RunTest_MasterExample(void)
 {
     RESOLVBUS_RESULT Result = RESOLVBUS_OK;
 
-    __MASTER Master = { 0 };
+    __MASTER Master = {
+        .Decoder = RESOLVBUS_LIVEDECODER_INITIALIZER,
+        .Encoder = RESOLVBUS_LIVEENCODER_INITIALIZER,
+    };
 
     __WRAP(__Initialize(&Master));
 

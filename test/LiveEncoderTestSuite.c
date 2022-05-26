@@ -20,7 +20,7 @@
 //---------------------------------------------------------------------------
 
 #define __PREAMBLE() \
-    RESOLVBUS_LIVEENCODER EncoderLocal = { 0 }; \
+    RESOLVBUS_LIVEENCODER EncoderLocal = RESOLVBUS_LIVEENCODER_INITIALIZER; \
     RESOLVBUS_LIVEENCODER *Encoder = &EncoderLocal; \
     uint8_t Buffer [512] = { 0 }; \
     __WRAP(ResolVBus_LiveEncoder_Initialize(Encoder, Buffer, sizeof (Buffer), __Handler)); \
@@ -513,8 +513,6 @@ static RESOLVBUS_RESULT __TestSuspendWithTimeoutAndCallback(void)
 
     __WRAP(ResolVBus_LiveEncoder_HandleTimer(Encoder, 0));
     __WRAP(ResolVBus_LiveEncoder_HandleTimer(Encoder, 10000));
-
-    __DLOG("PhaseTimeoutUs = %d", Encoder->PhaseTimeoutUs);
 
     __ASSERT_EQL(Encoder->Phase, RESOLVBUS_LIVEENCODERPHASE_SUSPENDEDWITHTIMEOUT);
     __ASSERT_EQL(Encoder->PhaseTimeoutUs, 250);

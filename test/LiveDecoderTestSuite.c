@@ -15,7 +15,7 @@
 //---------------------------------------------------------------------------
 
 #define __PREAMBLE() \
-    RESOLVBUS_LIVEDECODER DecoderLocal = { 0 }; \
+    RESOLVBUS_LIVEDECODER DecoderLocal = RESOLVBUS_LIVEDECODER_INITIALIZER; \
     RESOLVBUS_LIVEDECODER *Decoder = &DecoderLocal; \
     uint8_t FrameDataBufferLocal [512] = { 0 }; \
     __WRAP(ResolVBus_LiveDecoder_Initialize(Decoder, FrameDataBufferLocal, sizeof (FrameDataBufferLocal), __Handler)); \
@@ -91,6 +91,48 @@ static RESOLVBUS_RESULT __Handler(RESOLVBUS_LIVEDECODER *Decoder, const RESOLVBU
         __APPEND_LOG("Event = %s\n", EventName);
     } else {
         __APPEND_LOG("Event = ??? (%d)\n", Event->EventType);
+    }
+
+    return Result;
+}
+
+
+static RESOLVBUS_RESULT __TestDecodeShortFrameDataBuffer(void)
+{
+    RESOLVBUS_RESULT Result = RESOLVBUS_OK;
+
+    RESOLVBUS_LIVEDECODER DecoderLocal = RESOLVBUS_LIVEDECODER_INITIALIZER;
+    RESOLVBUS_LIVEDECODER *Decoder = &DecoderLocal;
+    uint8_t FrameDataBufferLocal [256] = { 0 };
+    __WRAP(ResolVBus_LiveDecoder_Initialize(Decoder, FrameDataBufferLocal, 2, __Handler));
+    __HandlerLog [0] = 0;
+    __ASSERT_EQL(Decoder->Event.FrameDataBufferLength, 2);
+
+    __WRAP(ResolVBus_LiveDecoder_Decode(Decoder, TestData_Live1 + 0, 10));
+
+    __ASSERT_LOG_EQL("Event = PACKETHEADER\n");
+    __ASSERT_EQL(Decoder->BufferIndex, 10);
+    __ASSERT_EQL(Decoder->Event.DestinationAddress, 0x0010);
+    __ASSERT_EQL(Decoder->Event.SourceAddress, 0x7E11);
+    __ASSERT_EQL(Decoder->Event.ProtocolVersion, 0x10);
+    __ASSERT_EQL(Decoder->Event.Command, 0x0100);
+    __ASSERT_EQL(Decoder->Event.FrameCount, 27);
+    __ASSERT_EQL(Decoder->Event.FrameIndex, 0);
+    __ASSERT_EQL(Decoder->Event.FrameDataLength, 4);
+
+    __WRAP(ResolVBus_LiveDecoder_Decode(Decoder, TestData_Live1 + 10, 6));
+    __ASSERT_LOG_EQL("Event = PACKETFRAME\n");
+    __ASSERT_EQL(Decoder->BufferIndex, 10);
+    __ASSERT_EQL(Decoder->Event.FrameData [0], 0x37);
+    __ASSERT_EQL(Decoder->Event.FrameData [1], 0x00);
+    __ASSERT_EQL(Decoder->Event.FrameData [2], 0x1d);
+    __ASSERT_EQL(Decoder->Event.FrameData [3], 0x01);
+
+    __ASSERT_EQL(((uint8_t *)Decoder->Event.FrameDataBuffer) [0], 0x37);
+    __ASSERT_EQL(((uint8_t *)Decoder->Event.FrameDataBuffer) [1], 0x00);
+
+    for (size_t i = 2; i < sizeof (FrameDataBufferLocal); i++) {
+        __ASSERT_EQL(FrameDataBufferLocal [i], 0x00);
     }
 
     return Result;
@@ -285,6 +327,7 @@ RESOLVBUS_RESULT RunTestSuite_LiveDecoder(void)
     RESOLVBUS_RESULT Result = RESOLVBUS_OK;
 
     __WRAP(__TestDecode());
+    __WRAP(__TestDecodeShortFrameDataBuffer());
 
     return Result;
 }

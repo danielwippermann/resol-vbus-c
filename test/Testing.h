@@ -41,6 +41,10 @@
     __WRAP_SHORT(AssertEql(__Left__, #__Left__, __Right__, #__Right__)); \
 
 
+#define __ASSERT_NOT_EQL(__Left__, __Right__) \
+    __WRAP_SHORT(AssertNotEql(__Left__, #__Left__, __Right__, #__Right__)); \
+
+
 #define __ASSERT_RESULT_EQL(__ErrorSuffix__, __ErrorMessage__, __Result__) \
     __WRAP_SHORT(AssertResultEql(RESOLVBUS_ERROR_##__ErrorSuffix__, __ErrorMessage__, __Result__)); \
 
@@ -85,6 +89,7 @@ extern const uint8_t TestData_Live2 [17];
 
 void AppendToLog(char *Log, size_t Length, const char *Format, ...);
 RESOLVBUS_RESULT AssertEql(int64_t LeftValue, const char *LeftExpr, int64_t RightValue, const char *RightExpr);
+RESOLVBUS_RESULT AssertNotEql(int64_t LeftValue, const char *LeftExpr, int64_t RightValue, const char *RightExpr);
 RESOLVBUS_RESULT AssertStringEql(const char *LeftValue, const char *LeftExpr, const char *RightValue, const char *RightExpr);
 RESOLVBUS_RESULT AssertResultEql(RESOLVBUS_RESULT ExpectedResult, const char *ExpectedMessage, RESOLVBUS_RESULT ActualResult);
 

@@ -173,7 +173,10 @@ int main(int argc, char **argv)
 {
     RESOLVBUS_RESULT Result = RESOLVBUS_OK;
 
-    __MINION Minion = { 0 };
+    __MINION Minion = {
+        .Decoder = RESOLVBUS_LIVEDECODER_INITIALIZER,
+        .Encoder = RESOLVBUS_LIVEENCODER_INITIALIZER,
+    };
 
     if (Result == RESOLVBUS_OK) {
         Result = __Initialize(&Minion);
@@ -184,7 +187,7 @@ int main(int argc, char **argv)
     }
 
     while (Result == RESOLVBUS_OK) {
-        uint8_t ReadBytes [128] = { 0 };
+        uint8_t ReadBytes [128] = {};
         size_t ReadLength = 0;
         if (Result == RESOLVBUS_OK) {
             // TODO: read from serial port / socket / ... with short timeout / non-blocking

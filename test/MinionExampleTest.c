@@ -101,7 +101,10 @@ RESOLVBUS_RESULT RunTest_MinionExample(void)
 {
     RESOLVBUS_RESULT Result = RESOLVBUS_OK;
 
-    __MINION Minion = { 0 };
+    __MINION Minion = {
+        .Decoder = RESOLVBUS_LIVEDECODER_INITIALIZER,
+        .Encoder = RESOLVBUS_LIVEENCODER_INITIALIZER,
+    };
 
     __WRAP(__Initialize(&Minion));
 
