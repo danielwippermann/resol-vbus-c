@@ -1,6 +1,6 @@
 # Summary
 
-- [Introduction](../README.md)
+- [Introduction](./README.md)
 - [Details](./Details.md)
     - [Error handling](./ErrorHandling.md)
     - [LiveEncoder](./LiveEncoder.md)
