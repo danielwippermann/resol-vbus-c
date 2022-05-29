@@ -7,6 +7,7 @@ A C library for processing RESOL VBus data.
 
 - Source code: https://github.com/danielwippermann/resol-vbus-c
 - Documentation: https://danielwippermann.github.io/resol-vbus-c/
+- Doxygen-generated documentation: https://danielwippermann.github.io/resol-vbus-c/doxygen/_resol_v_bus_8h.html
 
 
 ## Features
