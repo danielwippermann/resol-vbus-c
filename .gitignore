@@ -3,3 +3,5 @@ output/
 .ninja_deps
 .ninja_log
 local.ninja
+book/
+index.html

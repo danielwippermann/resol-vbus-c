@@ -151,12 +151,12 @@ static RESOLVBUS_RESULT __HandleLoopCycle(__MINION *Minion, uint32_t TimePassedU
 {
     RESOLVBUS_RESULT Result = RESOLVBUS_OK;
 
-    if (Result == RESOLVBUS_OK) {
-        Result = ResolVBus_LiveEncoder_HandleTimer(&Minion->Encoder, TimePassedUs);
-    }
-
     if ((Result == RESOLVBUS_OK) && ReadBytes) {
         Result = ResolVBus_LiveDecoder_Decode(&Minion->Decoder, ReadBytes, ReadLength);
+    }
+
+    if (Result == RESOLVBUS_OK) {
+        Result = ResolVBus_LiveEncoder_HandleTimer(&Minion->Encoder, TimePassedUs);
     }
 
     return Result;

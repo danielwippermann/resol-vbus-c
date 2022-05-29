@@ -230,7 +230,7 @@ static RESOLVBUS_RESULT __HandleLoopCycle(__MASTER *Master, bool ShouldStartIfId
 
     if ((Result == RESOLVBUS_OK) && ShouldStartIfIdle) {
         if (Master->Phase != 0) {
-            // ignore, because previos transmission is still in progress
+            // ignore, because previous transmission is still in progress
         } else {
             Master->Phase = 1;
 
@@ -244,12 +244,12 @@ static RESOLVBUS_RESULT __HandleLoopCycle(__MASTER *Master, bool ShouldStartIfId
         }
     }
 
-    if (Result == RESOLVBUS_OK) {
-        Result = ResolVBus_LiveEncoder_HandleTimer(&Master->Encoder, TimePassedUs);
-    }
-
     if ((Result == RESOLVBUS_OK) && ReadBytes) {
         Result = ResolVBus_LiveDecoder_Decode(&Master->Decoder, ReadBytes, ReadLength);
+    }
+
+    if (Result == RESOLVBUS_OK) {
+        Result = ResolVBus_LiveEncoder_HandleTimer(&Master->Encoder, TimePassedUs);
     }
 
     return Result;
