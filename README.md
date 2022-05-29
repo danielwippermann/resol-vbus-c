@@ -2,6 +2,12 @@
 
 A C library for processing RESOL VBus data.
 
+![GitHub Workflow Status](https://img.shields.io/github/workflow/status/danielwippermann/resol-vbus-c/ci) ![License](https://img.shields.io/badge/license-MIT%2FApache--2.0-blue) ![GitHub release (latest by date)](https://img.shields.io/github/v/release/danielwippermann/resol-vbus-c)
+
+
+- Source code: https://github.com/danielwippermann/resol-vbus-c
+- Documentation: https://danielwippermann.github.io/resol-vbus-c/
+
 
 ## Features
 
