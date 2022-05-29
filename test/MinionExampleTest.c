@@ -123,11 +123,6 @@ RESOLVBUS_RESULT RunTest_MinionExample(void)
 
     __WRAP(__HandleLoopCycle(&Minion, 0, Bytes1, sizeof (Bytes1)));
 
-    __ASSERT_LOG_EQL("");
-    __ASSERT_EQL(Minion.Encoder.Phase, RESOLVBUS_LIVEENCODERPHASE_IDLE);
-
-    __WRAP(__HandleLoopCycle(&Minion, 0, NULL, 0));
-
     __ASSERT_LOG_EQL("Event = TRANSMIT, Data = 0xAA 0x34 0x12 0x45 0x23 0x10 0x00 0x01 0x02 0x3E 0x00 0x00 0x00 0x00 0x00 0x7F 0x00 0x00 0x7F 0x7F 0x0C 0x75\n");
     __ASSERT_EQL(Minion.Encoder.Phase, RESOLVBUS_LIVEENCODERPHASE_TRANSMITTING);
     __ASSERT_EQL(Minion.Encoder.PhaseTimeoutUs, 22917);
