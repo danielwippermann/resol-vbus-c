@@ -38,6 +38,8 @@
 
 #define RESOLVBUS_LIVEENCODER_INITIALIZER { .BufferLength = 0, }
 #define RESOLVBUS_LIVEDECODER_INITIALIZER { .BufferIndex = 0, }
+#define RESOLVBUS_LIVETRANSCEIVEROPTIONS_INITIALIZER { .Tries = 0, }
+#define RESOLVBUS_LIVETRANSCEIVER_INITIALIZER { .ActionTries = 0, }
 
 
 
@@ -229,10 +231,36 @@ typedef enum RESOLVBUS_LIVEDECODEREVENTTYPE {
 } RESOLVBUS_LIVEDECODEREVENTTYPE;
 
 
+typedef enum RESOLVBUS_LIVETRANSCEIVEREVENTTYPE {
+    /**
+     * Emitted when the active action needs to send its request.
+     */
+    RESOLVBUS_LIVETRANSCEIVEREVENTTYPE_ACTION,
+
+    /**
+     * Emitted when the active action timed out.
+     */
+    RESOLVBUS_LIVETRANSCEIVEREVENTTYPE_TIMEOUT,
+
+    /**
+     * Forwards an event emitted by the Encoder (e.g. to transmit data).
+     */
+    RESOLVBUS_LIVETRANSCEIVEREVENTTYPE_ENCODER,
+
+    /**
+     * Forwards an event emitted by the Decoder.
+     */
+    RESOLVBUS_LIVETRANSCEIVEREVENTTYPE_DECODER,
+} RESOLVBUS_LIVETRANSCEIVEREVENTTYPE;
+
+
 typedef struct RESOLVBUS_LIVEENCODEREVENT RESOLVBUS_LIVEENCODEREVENT;
 typedef struct RESOLVBUS_LIVEENCODER RESOLVBUS_LIVEENCODER;
 typedef struct RESOLVBUS_LIVEDECODEREVENT RESOLVBUS_LIVEDECODEREVENT;
 typedef struct RESOLVBUS_LIVEDECODER RESOLVBUS_LIVEDECODER;
+typedef struct RESOLVBUS_LIVETRANSCEIVEREVENT RESOLVBUS_LIVETRANSCEIVEREVENT;
+typedef struct RESOLVBUS_LIVETRANSCEIVEROPTIONS RESOLVBUS_LIVETRANSCEIVEROPTIONS;
+typedef struct RESOLVBUS_LIVETRANSCEIVER RESOLVBUS_LIVETRANSCEIVER;
 
 
 
@@ -243,6 +271,7 @@ typedef struct RESOLVBUS_LIVEDECODER RESOLVBUS_LIVEDECODER;
 typedef RESOLVBUS_RESULT (*RESOLVBUS_LIVEENCODERHANDLER)(RESOLVBUS_LIVEENCODER *Encoder, const RESOLVBUS_LIVEENCODEREVENT *Event);
 typedef RESOLVBUS_RESULT (*RESOLVBUS_LIVEENCODERCALLBACK)(RESOLVBUS_LIVEENCODER *Encoder, void *Context);
 typedef RESOLVBUS_RESULT (*RESOLVBUS_LIVEDECODERHANDLER)(RESOLVBUS_LIVEDECODER *Decoder, const RESOLVBUS_LIVEDECODEREVENT *Event);
+typedef RESOLVBUS_RESULT (*RESOLVBUS_LIVETRANSCEIVERHANDLER)(RESOLVBUS_LIVETRANSCEIVER *Transceiver, const RESOLVBUS_LIVETRANSCEIVEREVENT *Event);
 
 
 
@@ -507,6 +536,155 @@ struct RESOLVBUS_LIVEDECODER {
      * Event to reconstruct decoded VBus information into.
      */
     RESOLVBUS_LIVEDECODEREVENT Event;
+};
+
+
+struct RESOLVBUS_LIVETRANSCEIVEREVENT {
+    /**
+     * Type of the event.
+     */
+    RESOLVBUS_LIVETRANSCEIVEREVENTTYPE EventType;
+
+    /**
+     * Encoder event if `EventType == RESOLVBUS_LIVETRANSCEIVEREVENTTYPE_ENCODER`.
+     */
+    const RESOLVBUS_LIVEENCODEREVENT *EncoderEvent;
+
+    /**
+     * Decoder event if `EventType == RESOLVBUS_LIVETRANSCEIVEREVENTTYPE_DECODER`.
+     */
+    const RESOLVBUS_LIVEDECODEREVENT *DecoderEvent;
+};
+
+
+struct RESOLVBUS_LIVETRANSCEIVEROPTIONS {
+    /**
+     * Number of tries to repeat action.
+     */
+    int Tries;
+
+    /**
+     * Timeout in microseconds for the first try.
+     */
+    uint32_t InitialTimeout;
+
+    /**
+     * Increment of the timeout in microseconds after each failed try.
+     */
+    uint32_t TimeoutIncrement;
+};
+
+
+struct RESOLVBUS_LIVETRANSCEIVER {
+    /**
+     * Encoder instance.
+     */
+    RESOLVBUS_LIVEENCODER Encoder;
+
+    /**
+     * Decoder instance.
+     */
+    RESOLVBUS_LIVEDECODER Decoder;
+
+    /**
+     * Handler to be called when an event is emitted.
+     */
+    RESOLVBUS_LIVETRANSCEIVERHANDLER Handler;
+
+    /**
+     * VBus address to use when sending requests.
+     */
+    uint16_t SelfAddress;
+
+    /**
+     * Indication that an action is currently running.
+     */
+    bool ActionSet;
+
+    /**
+     * Handler to be called when an action related event is emitted.
+     */
+    RESOLVBUS_LIVETRANSCEIVERHANDLER ActionHandler;
+
+    /**
+     * Number of remaining tries before the action fails.
+     */
+    int ActionTries;
+
+    /**
+     * Timeout in microseconds for the next try.
+     */
+    uint32_t ActionNextTimeout;
+
+    /**
+     * Increment of the timeout in microseconds after each failed try.
+     */
+    uint32_t ActionTimeoutIncr;
+
+    /**
+     * Timeout in microseconds for the current try.
+     */
+    uint32_t ActionTimeout;
+
+    /**
+     * Handler to be called once the action is committed (succeeded or failed).
+     */
+    RESOLVBUS_LIVETRANSCEIVERHANDLER ActionCommitHandler;
+
+    /**
+     * VBus addres to send requests to and receive responses from.
+     */
+    uint16_t ActionPeerAddress;
+
+    /**
+     * VBus command to send in request.
+     */
+    uint16_t ActionCommand;
+
+    /**
+     * 16-bit param to send in request.
+     */
+    uint16_t ActionParam16;
+
+    /**
+     * 32-bit param to send in request.
+     */
+    uint32_t ActionParam32;
+
+    /**
+     * First expected command in response.
+     */
+    uint16_t ActionExpectedCommand1;
+
+    /**
+     * Optional second expected command in response.
+     */
+    uint16_t ActionExpectedCommand2;
+
+    /**
+     * Optional third expected command in response.
+     */
+    uint16_t ActionExpectedCommand3;
+
+    /**
+     * Indicates that `ActionExpectedParam16` holds the expected 16-bit param in response.
+     */
+    bool ActionHasExpectedParam16;
+
+    /**
+     * 16-bit param expected in response.
+     */
+    uint16_t ActionExpectedParam16;
+
+    /**
+     * Indicates that `ActionExpectedParam32` holds the expected 32-bit param in response.
+     */
+    bool ActionHasExpectedParam32;
+
+    /**
+     * 32-bit param expected in response.
+     */
+    uint32_t ActionExpectedParam32;
 };
 
 
@@ -930,6 +1108,138 @@ RESOLVBUS_RESULT ResolVBus_LiveDecoder_Initialize(RESOLVBUS_LIVEDECODER *Decoder
  * @returns RESOLVBUS_OK if no error occurred
  */
 RESOLVBUS_RESULT ResolVBus_LiveDecoder_Decode(RESOLVBUS_LIVEDECODER *Decoder, const uint8_t *Bytes, size_t Length);
+
+
+/**
+ * Initialize a `RESOLVBUS_LIVETRANSCEIVER` instance.
+ *
+ * Lifetime: `EncoderBuffer` and `DecoderBuffer` must outlive `Transceiver`.
+ *
+ * @param Transceiver Transceiver instance to initialize
+ * @param EncoderBuffer Transmit buffer to construct VBus primitives into
+ * @param EncoderBufferLength Length of the `EncoderBuffer`
+ * @param DecoderBuffer Optional buffer to reconstruct frame data into
+ * @param DecoderBufferLength Length of the optional `DecoderBuffer`
+ * @param Handler Handler that is called when an event is emitted
+ * @returns RESOLVBUS_OK if no error occured
+ */
+RESOLVBUS_RESULT ResolVBus_LiveTransceiver_Initialize(RESOLVBUS_LIVETRANSCEIVER *Transceiver, uint8_t *EncoderBuffer, size_t EncoderBufferLength, void *DecoderBuffer, size_t DecoderBufferLength, RESOLVBUS_LIVETRANSCEIVERHANDLER Handler);
+
+
+/**
+ * Returns the amount of time that the transceiver needs to pass into another phase.
+ *
+ * The resulting timeout depends on the phase the transceiver's encoder is currently in as well as
+ * the remaining time until the currently active action times out.
+ *
+ * @param Transceiver Transceiver instance
+ * @param pMicroseconds Pointer to store the timeout value into
+ * @returns RESOLVBUS_OK if no error occured
+ */
+RESOLVBUS_RESULT ResolVBus_LiveTransceiver_GetTimeout(RESOLVBUS_LIVETRANSCEIVER *Transceiver, uint32_t *pMicroseconds);
+
+
+/**
+ * Inform the transceiver that a certain amount of time has passed.
+ *
+ * This function should be called "frequently" to update the internal state machine of the encoder:
+ * - after the amount of time returned by `ResolVBus_LiveTransceiver_GetTimeout` has passed
+ * - after responding to a event
+ * - after starting an action
+ *
+ * @param Transceiver Transceiver instance
+ * @param Microseconds Amount of time passed since last call to this function
+ * @returns RESOLVBUS_OK if no error occurred
+ */
+RESOLVBUS_RESULT ResolVBus_LiveTransceiver_HandleTimer(RESOLVBUS_LIVETRANSCEIVER *Transceiver, uint32_t Microseconds);
+
+
+/**
+ * Get access to the transceiver's encoder.
+ *
+ * @param Transceiver Transceiver instance
+ * @param pEncoder Pointer to store the Encoder instance into
+ * @returns RESOLVBUS_OK if no error occurred
+ */
+RESOLVBUS_RESULT ResolVBus_LiveTransceiver_GetEncoder(RESOLVBUS_LIVETRANSCEIVER *Transceiver, RESOLVBUS_LIVEENCODER **pEncoder);
+
+
+/**
+ * Decode the provided bytes.
+ *
+ * This function decodes the provided bytes and emits events every time a valid VBus primitive is reconstructed.
+ *
+ * @param Transceiver Transceiver instance
+ * @param Bytes Data to decode
+ * @param Length Length of the `Bytes` buffer
+ * @returns RESOLVBUS_OK if no error occurred
+ */
+RESOLVBUS_RESULT ResolVBus_LiveTransceiver_Decode(RESOLVBUS_LIVETRANSCEIVER *Transceiver, const uint8_t *Bytes, size_t Length);
+
+
+/**
+ * Start an action to wait for the controller to offer bus control.
+ *
+ * @param Transceiver Transceiver instance
+ * @param CustomOptions Optional custom options
+ * @param Handler Handler that is called when an action related event is emitted
+ * @returns RESOLVBUS_OK if no error occurred
+ */
+RESOLVBUS_RESULT ResolVBus_LiveTransceiver_WaitForFreeBus(RESOLVBUS_LIVETRANSCEIVER *Transceiver, const RESOLVBUS_LIVETRANSCEIVEROPTIONS *CustomOptions, RESOLVBUS_LIVETRANSCEIVERHANDLER Handler);
+
+
+/**
+ * Start an action to release bus control back to the controller.
+ *
+ * @param Transceiver Transceiver instance
+ * @param PeerAddress VBus address to pass bus control back to
+ * @param CustomOptions Optional custom options
+ * @param Handler Handler that is called when an action related event is emitted
+ * @returns RESOLVBUS_OK if no error occurred
+ */
+RESOLVBUS_RESULT ResolVBus_LiveTransceiver_ReleaseBus(RESOLVBUS_LIVETRANSCEIVER *Transceiver, uint16_t PeerAddress, const RESOLVBUS_LIVETRANSCEIVEROPTIONS *CustomOptions, RESOLVBUS_LIVETRANSCEIVERHANDLER Handler);
+
+
+/**
+ * Start an action to get a value from the controller.
+ *
+ * @param Transceiver Transceiver instance
+ * @param PeerAddress VBus address to pass bus control back to
+ * @param ValueId ID of the value to read
+ * @param ValueSubIndex Subindex of the value to read (if supported)
+ * @param CustomOptions Optional custom options
+ * @param Handler Handler that is called when an action related event is emitted
+ * @returns RESOLVBUS_OK if no error occurred
+ */
+RESOLVBUS_RESULT ResolVBus_LiveTransceiver_GetValueById(RESOLVBUS_LIVETRANSCEIVER *Transceiver, uint16_t PeerAddress, uint16_t ValueId, uint8_t ValueSubIndex, const RESOLVBUS_LIVETRANSCEIVEROPTIONS *CustomOptions, RESOLVBUS_LIVETRANSCEIVERHANDLER Handler);
+
+
+/**
+ * Start an action to set a value in the controller.
+ *
+ * @param Transceiver Transceiver instance
+ * @param PeerAddress VBus address to pass bus control back to
+ * @param ValueId ID of the value to write
+ * @param ValueSubIndex Subindex of the value to write (if supported)
+ * @param Value Value to write
+ * @param CustomOptions Optional custom options
+ * @param Handler Handler that is called when an action related event is emitted
+ * @returns RESOLVBUS_OK if no error occurred
+ */
+RESOLVBUS_RESULT ResolVBus_LiveTransceiver_SetValueById(RESOLVBUS_LIVETRANSCEIVER *Transceiver, uint16_t PeerAddress, uint16_t ValueId, uint8_t ValueSubIndex, uint32_t Value, const RESOLVBUS_LIVETRANSCEIVEROPTIONS *CustomOptions, RESOLVBUS_LIVETRANSCEIVERHANDLER Handler);
+
+
+/**
+ * Start an action to lookup a value's ID based on its ID hash.
+ *
+ * @param Transceiver Transceiver instance
+ * @param PeerAddress VBus address to pass bus control back to
+ * @param ValueIdHash ID hash of the value to lookup
+ * @param CustomOptions Optional custom options
+ * @param Handler Handler that is called when an action related event is emitted
+ * @returns RESOLVBUS_OK if no error occurred
+ */
+RESOLVBUS_RESULT ResolVBus_LiveTransceiver_GetValueIdByIdHash(RESOLVBUS_LIVETRANSCEIVER *Transceiver, uint16_t PeerAddress, uint32_t ValueIdHash, const RESOLVBUS_LIVETRANSCEIVEROPTIONS *CustomOptions, RESOLVBUS_LIVETRANSCEIVERHANDLER Handler);
 
 
 

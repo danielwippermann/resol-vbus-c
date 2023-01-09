@@ -220,6 +220,7 @@ int main(int argc, char **argv)
     __WRAP(RunTestSuite_Base());
     __WRAP(RunTestSuite_LiveDecoder());
     __WRAP(RunTestSuite_LiveEncoder());
+    __WRAP(RunTestSuite_LiveTransceiver());
 
     __WRAP(RunTest_MasterExample());
     __WRAP(RunTest_MinionExample());

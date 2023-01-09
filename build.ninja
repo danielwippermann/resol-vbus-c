@@ -24,10 +24,12 @@ build $hostOutputDirname/tmp/src/ResolVBusBase.o: compileHost src/ResolVBusBase.
 build $hostOutputDirname/tmp/src/ResolVBusDebug.o: compileHost src/ResolVBusDebug.c
 build $hostOutputDirname/tmp/src/ResolVBusLiveDecoder.o: compileHost src/ResolVBusLiveDecoder.c
 build $hostOutputDirname/tmp/src/ResolVBusLiveEncoder.o: compileHost src/ResolVBusLiveEncoder.c
+build $hostOutputDirname/tmp/src/ResolVBusLiveTransceiver.o: compileHost src/ResolVBusLiveTransceiver.c
 
 build $hostOutputDirname/tmp/test/BaseTestSuite.o: compileHost test/BaseTestSuite.c
 build $hostOutputDirname/tmp/test/LiveDecoderTestSuite.o: compileHost test/LiveDecoderTestSuite.c
 build $hostOutputDirname/tmp/test/LiveEncoderTestSuite.o: compileHost test/LiveEncoderTestSuite.c
+build $hostOutputDirname/tmp/test/LiveTransceiverTestSuite.o: compileHost test/LiveTransceiverTestSuite.c
 build $hostOutputDirname/tmp/test/MasterExampleTest.o: compileHost test/MasterExampleTest.c
 build $hostOutputDirname/tmp/test/MinionExampleTest.o: compileHost test/MinionExampleTest.c
 build $hostOutputDirname/tmp/test/TestData.o: compileHost test/TestData.c
@@ -37,10 +39,12 @@ build $hostOutputDirname/bin/ResolVBusTest: linkHost $hostOutputDirname/tmp/src/
                                                      $hostOutputDirname/tmp/src/ResolVBusDebug.o $
                                                      $hostOutputDirname/tmp/src/ResolVBusLiveDecoder.o $
                                                      $hostOutputDirname/tmp/src/ResolVBusLiveEncoder.o $
+                                                     $hostOutputDirname/tmp/src/ResolVBusLiveTransceiver.o $
                                                      $
                                                      $hostOutputDirname/tmp/test/BaseTestSuite.o $
                                                      $hostOutputDirname/tmp/test/LiveDecoderTestSuite.o $
                                                      $hostOutputDirname/tmp/test/LiveEncoderTestSuite.o $
+                                                     $hostOutputDirname/tmp/test/LiveTransceiverTestSuite.o $
                                                      $hostOutputDirname/tmp/test/MasterExampleTest.o $
                                                      $hostOutputDirname/tmp/test/MinionExampleTest.o $
                                                      $hostOutputDirname/tmp/test/TestData.o $
@@ -51,10 +55,12 @@ build hostTests: phony $hostOutputDirname/bin/ResolVBusTest
 build $embeddedOutputDirname/tmp/src/ResolVBusBase.o: compileEmbedded src/ResolVBusBase.c
 build $embeddedOutputDirname/tmp/src/ResolVBusLiveDecoder.o: compileEmbedded src/ResolVBusLiveDecoder.c
 build $embeddedOutputDirname/tmp/src/ResolVBusLiveEncoder.o: compileEmbedded src/ResolVBusLiveEncoder.c
+build $embeddedOutputDirname/tmp/src/ResolVBusLiveTransceiver.o: compileEmbedded src/ResolVBusLiveTransceiver.c
 
 build $embeddedOutputDirname/lib/libResolVBus.a: archiveEmbedded $embeddedOutputDirname/tmp/src/ResolVBusBase.o $
                                                                  $embeddedOutputDirname/tmp/src/ResolVBusLiveDecoder.o $
                                                                  $embeddedOutputDirname/tmp/src/ResolVBusLiveEncoder.o $
+                                                                 $embeddedOutputDirname/tmp/src/ResolVBusLiveTransceiver.o $
 
 build $embeddedOutputDirname/tmp/examples/Master.o: compileEmbedded examples/Master.c
 build $embeddedOutputDirname/tmp/examples/Minion.o: compileEmbedded examples/Minion.c

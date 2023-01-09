@@ -102,6 +102,7 @@ RESOLVBUS_RESULT AssertResultEql(RESOLVBUS_RESULT ExpectedResult, const char *Ex
 RESOLVBUS_RESULT RunTestSuite_Base(void);
 RESOLVBUS_RESULT RunTestSuite_LiveDecoder(void);
 RESOLVBUS_RESULT RunTestSuite_LiveEncoder(void);
+RESOLVBUS_RESULT RunTestSuite_LiveTransceiver(void);
 
 
 RESOLVBUS_RESULT RunTest_MasterExample(void);
