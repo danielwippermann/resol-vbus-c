@@ -31,17 +31,16 @@ jobs:
         path_to_write_report: ./output/host/codecov_report.txt
         verbose: true
 
-  test-macos-x64:
-    runs-on: macos-latest
-    continue-on-error: true
-    steps:
-    - uses: actions/checkout@v2
-    - name: Bootstrap
-      run: |
-        brew update
-        brew install ccache ninja
-        echo "" > local.ninja
-    - name: Build
-      run: ninja hostTests
-    - name: Test
-      run: output/host/bin/ResolVBusTest
+  # test-macos-x64:
+  #   runs-on: macos-latest
+  #   steps:
+  #   - uses: actions/checkout@v2
+  #   - name: Bootstrap
+  #     run: |
+  #       brew update
+  #       brew install ccache ninja
+  #       echo "" > local.ninja
+  #   - name: Build
+  #     run: ninja hostTests
+  #   - name: Test
+  #     run: output/host/bin/ResolVBusTest
