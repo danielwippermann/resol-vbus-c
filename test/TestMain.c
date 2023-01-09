@@ -160,6 +160,22 @@ RESOLVBUS_RESULT AssertNotEql(int64_t LeftValue, const char *LeftExpr, int64_t R
 }
 
 
+RESOLVBUS_RESULT AssertPointerEql(const void *LeftValue, const char *LeftExpr, const void *RightValue, const char *RightExpr)
+{
+    RESOLVBUS_RESULT Result = RESOLVBUS_OK;
+
+    if (LeftValue != RightValue) {
+        static char Message [1024] = { 0 };
+        snprintf(Message, sizeof (Message), "Expected pointers to equal\n  Left:  %s = %p\n  Right: %s = %p", LeftExpr, LeftValue, RightExpr, RightValue);
+
+        Result = RESOLVBUS_ERROR_UNKNOWN;
+        ResolVBus_ResetBacktrace(Message, "<see above>", __FILE__, __LINE__, __func__);
+    }
+
+    return Result;
+}
+
+
 RESOLVBUS_RESULT AssertStringEql(const char *LeftValue, const char *LeftExpr, const char *RightValue, const char *RightExpr)
 {
     RESOLVBUS_RESULT Result = RESOLVBUS_OK;
