@@ -24,6 +24,10 @@
 // PRIVATE DEFINES
 //---------------------------------------------------------------------------
 
+#ifndef RESOLVBUS_DEBUG_BACKTRACELENGTH
+#define RESOLVBUS_DEBUG_BACKTRACELENGTH 1024
+#endif
+
 
 
 //---------------------------------------------------------------------------
@@ -54,7 +58,7 @@
 // VARIABLES
 //---------------------------------------------------------------------------
 
-static char __Backtrace [1024] = { 0 };
+static char __Backtrace [RESOLVBUS_DEBUG_BACKTRACELENGTH] = { 0 };
 
 
 
