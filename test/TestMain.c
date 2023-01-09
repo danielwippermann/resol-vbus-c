@@ -181,7 +181,7 @@ RESOLVBUS_RESULT AssertStringEql(const char *LeftValue, const char *LeftExpr, co
     RESOLVBUS_RESULT Result = RESOLVBUS_OK;
 
     if (strcmp(LeftValue, RightValue) != 0) {
-        static char Message [1024] = { 0 };
+        static char Message [4096] = { 0 };
         snprintf(Message, sizeof (Message), "Expected strings to equal\n  Left:  %s = \"%s\"\n  Right: %s = \"%s\"", LeftExpr, LeftValue, RightExpr, RightValue);
 
         Result = RESOLVBUS_ERROR_UNKNOWN;
