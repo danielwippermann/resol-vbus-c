@@ -2,7 +2,7 @@
 
 A C library for processing RESOL VBus data.
 
-![GitHub Workflow Status](https://img.shields.io/github/workflow/status/danielwippermann/resol-vbus-c/Continuous%20Integration) ![GitHub release (latest by date)](https://img.shields.io/github/v/release/danielwippermann/resol-vbus-c) ![License](https://img.shields.io/badge/license-MIT%2FApache--2.0-blue) ![Codecov](https://img.shields.io/codecov/c/github/danielwippermann/resol-vbus-c)
+[![Continuous Integration](https://github.com/danielwippermann/resol-vbus-c/actions/workflows/ci.yml/badge.svg)](https://github.com/danielwippermann/resol-vbus-c/actions/workflows/ci.yml) ![GitHub release (latest by date)](https://img.shields.io/github/v/release/danielwippermann/resol-vbus-c) ![License](https://img.shields.io/badge/license-MIT%2FApache--2.0-blue) ![Codecov](https://img.shields.io/codecov/c/github/danielwippermann/resol-vbus-c)
 
 
 - Source code: https://github.com/danielwippermann/resol-vbus-c
