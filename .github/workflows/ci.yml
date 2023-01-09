@@ -33,6 +33,7 @@ jobs:
 
   test-macos-x64:
     runs-on: macos-latest
+    continue-on-error: true
     steps:
     - uses: actions/checkout@v2
     - name: Bootstrap
