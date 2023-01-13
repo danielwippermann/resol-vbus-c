@@ -10,6 +10,9 @@ rule compileHost
     command = rm -f $$(dirname $out)/$$(basename $out .o).{gcda,gcno} && ccache clang -Wall -Werror -Wpedantic -Iinclude -O0 -g3 --coverage -DRESOLVBUS_DEBUG=1 -DRESOLVBUS_DEBUG_BACKTRACELENGTH=4096 -MD -MF $out.d -c -o $out $in
     depfile = $out.d
 
+rule archiveHost
+    command = rm -f $out && ccache ar rcs $out $in
+
 rule linkHost
     command = ccache clang -Wall -Werror --coverage -o $out $in
 
@@ -34,6 +37,12 @@ build $hostOutputDirname/tmp/test/MasterExampleTest.o: compileHost test/MasterEx
 build $hostOutputDirname/tmp/test/MinionExampleTest.o: compileHost test/MinionExampleTest.c
 build $hostOutputDirname/tmp/test/TestData.o: compileHost test/TestData.c
 build $hostOutputDirname/tmp/test/TestMain.o: compileHost test/TestMain.c
+
+build $hostOutputDirname/lib/libResolVBus.a: archiveHost $hostOutputDirname/tmp/src/ResolVBusBase.o $
+                                                         $hostOutputDirname/tmp/src/ResolVBusDebug.o $
+                                                         $hostOutputDirname/tmp/src/ResolVBusLiveDecoder.o $
+                                                         $hostOutputDirname/tmp/src/ResolVBusLiveEncoder.o $
+                                                         $hostOutputDirname/tmp/src/ResolVBusLiveTransceiver.o $
 
 build $hostOutputDirname/bin/ResolVBusTest: linkHost $hostOutputDirname/tmp/src/ResolVBusBase.o $
                                                      $hostOutputDirname/tmp/src/ResolVBusDebug.o $
@@ -68,4 +77,4 @@ build $embeddedOutputDirname/tmp/examples/Minion.o: compileEmbedded examples/Min
 build embeddedExamples: phony $embeddedOutputDirname/tmp/examples/Master.o $
                               $embeddedOutputDirname/tmp/examples/Minion.o $
 
-default $hostOutputDirname/bin/ResolVBusTest $embeddedOutputDirname/lib/libResolVBus.a embeddedExamples
+default $hostOutputDirname/lib/libResolVBus.a $hostOutputDirname/bin/ResolVBusTest $embeddedOutputDirname/lib/libResolVBus.a embeddedExamples
