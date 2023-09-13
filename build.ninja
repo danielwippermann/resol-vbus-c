@@ -7,14 +7,14 @@ embeddedOutputDirname = $outputDirname/embedded
 include local.ninja
 
 rule compileHost
-    command = rm -f $$(dirname $out)/$$(basename $out .o).{gcda,gcno} && ccache clang -Wall -Werror -Wpedantic -Iinclude -O0 -g3 --coverage -DRESOLVBUS_DEBUG=1 -DRESOLVBUS_DEBUG_BACKTRACELENGTH=4096 -MD -MF $out.d -c -o $out $in
+    command = rm -f $$(dirname $out)/$$(basename $out .o).{gcda,gcno} && ccache clang -Wall -Werror -Wpedantic -fsanitize=undefined,address -Iinclude -O0 -g3 --coverage -DRESOLVBUS_DEBUG=1 -DRESOLVBUS_DEBUG_BACKTRACELENGTH=16384 -MD -MF $out.d -c -o $out $in
     depfile = $out.d
 
 rule archiveHost
     command = rm -f $out && ccache ar rcs $out $in
 
 rule linkHost
-    command = ccache clang -Wall -Werror --coverage -o $out $in
+    command = ccache clang -Wall -Werror -fsanitize=undefined,address --coverage -o $out $in
 
 rule compileEmbedded
     command = ccache ${embeddedPrefix}gcc -Wall -Werror -Iinclude -O3 -MD -MF $out.d -c -o $out $in
