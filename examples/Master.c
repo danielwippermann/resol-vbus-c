@@ -160,7 +160,7 @@ static RESOLVBUS_RESULT __DecoderHandler(RESOLVBUS_LIVEDECODER *Decoder, const R
 {
     RESOLVBUS_RESULT Result = RESOLVBUS_OK;
 
-    // __MASTER *Master = RESOLVBUS_CONTAINEROF(Decoder, __MASTER, Decoder);
+    __MASTER *Master = RESOLVBUS_CONTAINEROF(Decoder, __MASTER, Decoder);
 
     if (Event->EventType == RESOLVBUS_LIVEDECODEREVENTTYPE_PACKETEND) {
         if (Event->DestinationAddress != __SELFADDRESS) {
@@ -173,6 +173,45 @@ static RESOLVBUS_RESULT __DecoderHandler(RESOLVBUS_LIVEDECODER *Decoder, const R
             }
         } else {
             // ignore
+        }
+    } else if (Event->EventType == RESOLVBUS_LIVEDECODEREVENTTYPE_DATAGRAM) {
+        bool CanTransmit = false;
+        uint16_t TxCommand = 0;
+        uint16_t TxParam16 = 0;
+        uint32_t TxParam32 = 0;
+
+        if (Event->DestinationAddress != __SELFADDRESS) {
+            // ignore
+        } else if (Event->Command == 0x0300) {
+            CanTransmit = true;
+            TxCommand = 0x0100;
+            TxParam16 = Event->Param16;
+
+            if (Event->Param16 == 0) {
+                TxParam32 = 0x12345678;
+            } else {
+                CanTransmit = false;
+            }
+        } else if (Event->Command == 0x0600) {
+            if (Result == RESOLVBUS_OK) {
+                Result = ResolVBus_LiveEncoder_Resume(&Master->Encoder);
+            }
+        } else {
+            // ignore
+        }
+
+        if (CanTransmit) {
+            if (Result == RESOLVBUS_OK) {
+                Result = ResolVBus_LiveEncoder_Resume(&Master->Encoder);
+            }
+
+            if (Result == RESOLVBUS_OK) {
+                Result = ResolVBus_LiveEncoder_QueueDatagram(&Master->Encoder, Event->SourceAddress, __SELFADDRESS, 0, TxCommand, TxParam16, TxParam32);
+            }
+
+            if (Result == RESOLVBUS_OK) {
+                Result = ResolVBus_LiveEncoder_SuspendWithTimeout(&Master->Encoder, 10000000);
+            }
         }
     }
 
