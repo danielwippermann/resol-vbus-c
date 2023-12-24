@@ -245,10 +245,14 @@ int main(int argc, char **argv)
     }
 
     while (Result == RESOLVBUS_OK) {
+        uint32_t TimeoutUs = 0;
+        __WRAP(ResolVBus_LiveTransceiver_GetTimeout(&Parameterization.Transceiver, &TimeoutUs));
+
         uint8_t ReadBytes [128] = {};
         size_t ReadLength = 0;
         if (Result == RESOLVBUS_OK) {
             // TODO: read from serial port / socket / ... with short timeout / non-blocking
+            // `TimeoutUs` contains an indication, how long the timeout should be
         }
 
         time_t HostTimestamp = 0;
