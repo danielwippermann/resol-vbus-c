@@ -258,6 +258,7 @@ int main(int argc, char **argv)
         time_t HostTimestamp = 0;
         if (Result == RESOLVBUS_OK) {
             // TODO: get host timestamp
+            (void) HostTimestamp;
         }
 
         uint32_t ControllerTimestamp = 0;

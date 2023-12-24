@@ -107,6 +107,7 @@ RESOLVBUS_RESULT RunTestSuite_LiveTransceiver(void);
 
 RESOLVBUS_RESULT RunTest_MasterExample(void);
 RESOLVBUS_RESULT RunTest_MinionExample(void);
+RESOLVBUS_RESULT RunTest_ParameterizationExample(void);
 
 
 

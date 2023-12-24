@@ -224,6 +224,7 @@ int main(int argc, char **argv)
 
     __WRAP(RunTest_MasterExample());
     __WRAP(RunTest_MinionExample());
+    __WRAP(RunTest_ParameterizationExample());
 
     int ExitCode = 0;
     if (Result == RESOLVBUS_OK) {
