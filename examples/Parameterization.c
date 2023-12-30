@@ -187,7 +187,7 @@ static RESOLVBUS_RESULT __TransceiverHandler(RESOLVBUS_LIVETRANSCEIVER *Transcei
 
         if (EncoderEvent->EventType == RESOLVBUS_LIVEENCODEREVENTTYPE_TRANSMIT) {
             if (Result == RESOLVBUS_OK) {
-                // TODO: transmit `Data` of length `Length` over serial port
+                // TODO: transmit `EncoderEvent->TransmitBytes` of length `EncoderEvent->TransmitLength` over serial port
             }
         }
     }

@@ -119,7 +119,7 @@ static RESOLVBUS_RESULT __EncoderHandler(RESOLVBUS_LIVEENCODER *Encoder, const R
 
     if (Event->EventType == RESOLVBUS_LIVEENCODEREVENTTYPE_TRANSMIT) {
         if (Result == RESOLVBUS_OK) {
-            // TODO: transmit `Data` of length `Length` over serial port
+            // TODO: transmit `Event->TransmitBytes` of length `Event->TransmitLength` over serial port
         }
     }
 
