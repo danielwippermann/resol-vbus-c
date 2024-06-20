@@ -343,6 +343,21 @@ static RESOLVBUS_RESULT __TestHandleTimer(void)
 }
 
 
+static RESOLVBUS_RESULT __TestGetEncoder(void)
+{
+    RESOLVBUS_RESULT Result = RESOLVBUS_OK;
+
+    __PREAMBLE();
+
+    RESOLVBUS_LIVEENCODER *Encoder = NULL;
+    __WRAP(ResolVBus_LiveTransceiver_GetEncoder(Transceiver, &Encoder));
+
+    __ASSERT_POINTER_EQL(Encoder, &Transceiver->Encoder);
+
+    return Result;
+}
+
+
 static RESOLVBUS_RESULT __TestDecode(void)
 {
     RESOLVBUS_RESULT Result = RESOLVBUS_OK;
@@ -384,6 +399,141 @@ static RESOLVBUS_RESULT __TestDecode(void)
         "DecoderEvent (g) = PACKETFRAME\n"
         "DecoderEvent (g) = PACKETEND\n"
     );
+
+    return Result;
+}
+
+
+static RESOLVBUS_RESULT __TestableActionHandler(RESOLVBUS_LIVETRANSCEIVER *Transceiver, const RESOLVBUS_LIVETRANSCEIVEREVENT *Event)
+{
+    RESOLVBUS_RESULT Result = RESOLVBUS_OK;
+
+    if (Event->EventType == RESOLVBUS_LIVETRANSCEIVEREVENTTYPE_ACTION) {
+        __APPEND_LOG("ACTION@__TestableActionHandler\n");
+    } else {
+        __APPEND_LOG("?@__TestableActionHandler\n");
+    }
+
+    return Result;
+}
+
+
+static RESOLVBUS_RESULT __TestableActionCommitHandler(RESOLVBUS_LIVETRANSCEIVER *Transceiver, const RESOLVBUS_LIVETRANSCEIVEREVENT *Event)
+{
+    RESOLVBUS_RESULT Result = RESOLVBUS_OK;
+
+    if (Event->EventType == RESOLVBUS_LIVETRANSCEIVEREVENTTYPE_TIMEOUT) {
+        __APPEND_LOG("TIMEOUT@__TestableActionCommitHandler\n");
+    } else {
+        __APPEND_LOG("?@__TestableActionCommitHandler\n");
+    }
+
+    return Result;
+}
+
+
+static RESOLVBUS_RESULT __TestStartAction(void)
+{
+    RESOLVBUS_RESULT Result = RESOLVBUS_OK;
+
+    __PREAMBLE();
+
+    __ASSERT_EQL(Transceiver->ActionSet, false);
+    __ASSERT_POINTER_EQL((void *) Transceiver->ActionHandler, NULL);
+    __ASSERT_EQL(Transceiver->ActionTries, 0);
+    __ASSERT_EQL(Transceiver->ActionNextTimeout, 0);
+    __ASSERT_EQL(Transceiver->ActionTimeoutIncr, 0);
+    __ASSERT_POINTER_EQL((void *) Transceiver->ActionCommitHandler, NULL);
+
+    static const RESOLVBUS_LIVETRANSCEIVEROPTIONS Options = {
+        .Tries = 111,
+        .InitialTimeout = 222,
+        .TimeoutIncrement = 333,
+    };
+
+    __WRAP(ResolVBus_LiveTransceiver_SetAction(Transceiver, __TestableActionHandler, &Options, __TestableActionCommitHandler));
+
+    __ASSERT_EQL(Transceiver->ActionSet, true);
+    __ASSERT_POINTER_EQL((void *) Transceiver->ActionHandler, (void *) __TestableActionHandler);
+    __ASSERT_EQL(Transceiver->ActionTries, Options.Tries);
+    __ASSERT_EQL(Transceiver->ActionNextTimeout, Options.InitialTimeout + Options.TimeoutIncrement);
+    __ASSERT_EQL(Transceiver->ActionTimeoutIncr, Options.TimeoutIncrement);
+    __ASSERT_POINTER_EQL((void *) Transceiver->ActionCommitHandler, (void *) __TestableActionCommitHandler);
+
+    __ASSERT_LOG_EQL(
+        "ACTION@__TestableActionHandler\n"
+    );
+
+    return Result;
+}
+
+
+static RESOLVBUS_RESULT __TestCommitAction(void)
+{
+    RESOLVBUS_RESULT Result = RESOLVBUS_OK;
+
+    __PREAMBLE();
+
+    static const RESOLVBUS_LIVETRANSCEIVEROPTIONS Options = {
+        .Tries = 111,
+        .InitialTimeout = 222,
+        .TimeoutIncrement = 333,
+    };
+
+    __WRAP(ResolVBus_LiveTransceiver_SetAction(Transceiver, __TestableActionHandler, &Options, __TestableActionCommitHandler));
+
+    __ASSERT_EQL(Transceiver->ActionSet, true);
+    __ASSERT_POINTER_EQL((void *) Transceiver->ActionHandler, (void *) __TestableActionHandler);
+    __ASSERT_EQL(Transceiver->ActionTries, Options.Tries);
+    __ASSERT_EQL(Transceiver->ActionNextTimeout, Options.InitialTimeout + Options.TimeoutIncrement);
+    __ASSERT_EQL(Transceiver->ActionTimeoutIncr, Options.TimeoutIncrement);
+    __ASSERT_POINTER_EQL((void *) Transceiver->ActionCommitHandler, (void *) __TestableActionCommitHandler);
+
+    __ASSERT_LOG_EQL(
+        "ACTION@__TestableActionHandler\n"
+    );
+
+    static const RESOLVBUS_LIVETRANSCEIVEREVENT Event = {
+        .EventType = RESOLVBUS_LIVETRANSCEIVEREVENTTYPE_TIMEOUT,
+    };
+
+    __WRAP(ResolVBus_LiveTransceiver_CommitAction(Transceiver, &Event));
+
+    __ASSERT_LOG_EQL(
+        "TIMEOUT@__TestableActionCommitHandler\n"
+    );
+
+    return Result;
+}
+
+
+static RESOLVBUS_RESULT __TestWaitForAnyData(void)
+{
+    RESOLVBUS_RESULT Result = RESOLVBUS_OK;
+
+    __PREAMBLE();
+
+    __WRAP(ResolVBus_LiveTransceiver_WaitForAnyData(Transceiver, NULL, __Handler));
+
+    __WRAP(ResolVBus_LiveTransceiver_Decode(Transceiver, __DatagramBytes_0000_7E11_0500_0000_00000000, sizeof (__DatagramBytes_0000_7E11_0500_0000_00000000)));
+
+    __ASSERT_LOG_EQL("DecoderEvent = DATAGRAM\n");
+
+    __WRAP(ResolVBus_LiveTransceiver_WaitForAnyData(Transceiver, NULL, __Handler));
+
+    __ASSERT_EQL(Transceiver->ActionTries, 1);
+    __ASSERT_EQL(Transceiver->ActionNextTimeout, 100000);
+    __ASSERT_EQL(Transceiver->ActionTimeoutIncr, 0);
+    __ASSERT_EQL(Transceiver->ActionTimeout, 100000);
+
+    __WRAP(ResolVBus_LiveTransceiver_HandleTimer(Transceiver, 100000));
+
+    __ASSERT_EQL(Transceiver->ActionTries, 0);
+    __ASSERT_EQL(Transceiver->ActionNextTimeout, 0);
+    __ASSERT_EQL(Transceiver->ActionTimeoutIncr, 0);
+    __ASSERT_EQL(Transceiver->ActionTimeout, 0);
+
+    __ASSERT_LOG_EQL("TimeoutEvent\n");
 
     return Result;
 }
@@ -739,7 +889,11 @@ RESOLVBUS_RESULT RunTestSuite_LiveTransceiver(void)
     __WRAP(__TestInitialize());
     __WRAP(__TestGetTimeout());
     __WRAP(__TestHandleTimer());
+    __WRAP(__TestGetEncoder());
     __WRAP(__TestDecode());
+    __WRAP(__TestStartAction());
+    __WRAP(__TestCommitAction());
+    __WRAP(__TestWaitForAnyData());
     __WRAP(__TestWaitForFreeBus());
     __WRAP(__TestReleaseBus());
     __WRAP(__TestGetValueById());
