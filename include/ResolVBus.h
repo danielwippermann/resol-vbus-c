@@ -1178,6 +1178,39 @@ RESOLVBUS_RESULT ResolVBus_LiveTransceiver_Decode(RESOLVBUS_LIVETRANSCEIVER *Tra
 
 
 /**
+ * Start a custom action.
+ *
+ * @param Transceiver Transceiver instance
+ * @param Handler Handler that is called when event need to be processed while this action is active
+ * @param Options Options like timeouts, retry counts etc.
+ * @param CommitHandler Handler that is called when an action is commited or times out
+ * @returns RESOLVBUS_OK if no error occurred
+ */
+RESOLVBUS_RESULT ResolVBus_LiveTransceiver_SetAction(RESOLVBUS_LIVETRANSCEIVER *Transceiver, RESOLVBUS_LIVETRANSCEIVERHANDLER Handler, const RESOLVBUS_LIVETRANSCEIVEROPTIONS *Options, RESOLVBUS_LIVETRANSCEIVERHANDLER CommitHandler);
+
+
+/**
+ * Commit the active action.
+ *
+ * @param Transceiver Transceiver instance
+ * @param Event Event that should be reported to the active action commit handler
+ * @returns RESOLVBUS_OK if no error occurred
+ */
+RESOLVBUS_RESULT ResolVBus_LiveTransceiver_CommitAction(RESOLVBUS_LIVETRANSCEIVER *Transceiver, const RESOLVBUS_LIVETRANSCEIVEREVENT *Event);
+
+
+/**
+ * Start an action to wait for any data (packet, datagram or telegram).
+ *
+ * @param Transceiver Transceiver instance
+ * @param CustomOptions Optional custom options
+ * @param Handler Handler that is called when an action related event is emitted
+ * @returns RESOLVBUS_OK if no error occurred
+ */
+RESOLVBUS_RESULT ResolVBus_LiveTransceiver_WaitForAnyData(RESOLVBUS_LIVETRANSCEIVER *Transceiver, const RESOLVBUS_LIVETRANSCEIVEROPTIONS *CustomOptions, RESOLVBUS_LIVETRANSCEIVERHANDLER Handler);
+
+
+/**
  * Start an action to wait for the controller to offer bus control.
  *
  * @param Transceiver Transceiver instance

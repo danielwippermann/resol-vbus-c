@@ -54,6 +54,13 @@ static const RESOLVBUS_LIVETRANSCEIVEROPTIONS __DefaultOptions = {
 };
 
 
+static const RESOLVBUS_LIVETRANSCEIVEROPTIONS __WaitForAnyDataOptions = {
+    .Tries = 1,
+    .InitialTimeout = 100000,
+    .TimeoutIncrement = 0,
+};
+
+
 static const RESOLVBUS_LIVETRANSCEIVEROPTIONS __WaitForFreeBusOptions = {
     .Tries = 1,
     .InitialTimeout = 20000000,
@@ -162,6 +169,24 @@ static RESOLVBUS_RESULT __ApplyOptions(const RESOLVBUS_LIVETRANSCEIVEROPTIONS *D
     Options->Tries = (CustomOptions && CustomOptions->Tries) ? CustomOptions->Tries : DefaultOptions->Tries;
     Options->InitialTimeout = (CustomOptions && CustomOptions->InitialTimeout) ? CustomOptions->InitialTimeout : DefaultOptions->InitialTimeout;
     Options->TimeoutIncrement = (CustomOptions && CustomOptions->TimeoutIncrement) ? CustomOptions->TimeoutIncrement : DefaultOptions->TimeoutIncrement;
+
+    return Result;
+}
+
+
+static RESOLVBUS_RESULT __WaitForAnyDataHandler(RESOLVBUS_LIVETRANSCEIVER *Transceiver, const RESOLVBUS_LIVETRANSCEIVEREVENT *Event)
+{
+    RESOLVBUS_RESULT Result = RESOLVBUS_OK;
+
+    if (Event->EventType == RESOLVBUS_LIVETRANSCEIVEREVENTTYPE_ACTION) {
+        __WRAP(ResolVBus_LiveEncoder_Resume(&Transceiver->Encoder));
+
+        // nop
+
+        __WRAP(ResolVBus_LiveEncoder_Suspend(&Transceiver->Encoder));
+    } else if (Event->EventType == RESOLVBUS_LIVETRANSCEIVEREVENTTYPE_DECODER) {
+        __WRAP(__CommitAction(Transceiver, Event));
+    }
 
     return Result;
 }
@@ -386,7 +411,19 @@ RESOLVBUS_RESULT ResolVBus_LiveTransceiver_HandleTimer(RESOLVBUS_LIVETRANSCEIVER
 }
 
 
-// RESOLVBUS_RESULT ResolVBus_LiveTransceiver_GetEncoder(RESOLVBUS_LIVETRANSCEIVER *Transceiver, RESOLVBUS_LIVEENCODER **pEncoder);
+RESOLVBUS_RESULT ResolVBus_LiveTransceiver_GetEncoder(RESOLVBUS_LIVETRANSCEIVER *Transceiver, RESOLVBUS_LIVEENCODER **pEncoder)
+{
+    RESOLVBUS_RESULT Result = RESOLVBUS_OK;
+
+    __ASSERT_WITH(NULLPOINTER, Transceiver);
+    __ASSERT_WITH(NULLPOINTER, pEncoder);
+
+    if (Result == RESOLVBUS_OK) {
+        *pEncoder = &Transceiver->Encoder;
+    }
+
+    return Result;
+}
 
 
 RESOLVBUS_RESULT ResolVBus_LiveTransceiver_Decode(RESOLVBUS_LIVETRANSCEIVER *Transceiver, const uint8_t *Bytes, size_t Length)
@@ -396,6 +433,53 @@ RESOLVBUS_RESULT ResolVBus_LiveTransceiver_Decode(RESOLVBUS_LIVETRANSCEIVER *Tra
     __ASSERT_WITH(NULLPOINTER, Transceiver);
 
     __WRAP(ResolVBus_LiveDecoder_Decode(&Transceiver->Decoder, Bytes, Length));
+
+    return Result;
+}
+
+
+RESOLVBUS_RESULT ResolVBus_LiveTransceiver_SetAction(RESOLVBUS_LIVETRANSCEIVER *Transceiver, RESOLVBUS_LIVETRANSCEIVERHANDLER Handler, const RESOLVBUS_LIVETRANSCEIVEROPTIONS *Options, RESOLVBUS_LIVETRANSCEIVERHANDLER CommitHandler)
+{
+    RESOLVBUS_RESULT Result = RESOLVBUS_OK;
+
+    __ASSERT_WITH(NULLPOINTER, Transceiver);
+    __ASSERT_WITH(NULLPOINTER, Handler);
+    __ASSERT_WITH(NULLPOINTER, Options);
+    __ASSERT_WITH(NULLPOINTER, CommitHandler);
+
+    if (Result == RESOLVBUS_OK) {
+        Result = __SetAction(Transceiver, Handler, Options, CommitHandler);
+    }
+
+    return Result;
+}
+
+
+RESOLVBUS_RESULT ResolVBus_LiveTransceiver_CommitAction(RESOLVBUS_LIVETRANSCEIVER *Transceiver, const RESOLVBUS_LIVETRANSCEIVEREVENT *Event)
+{
+    RESOLVBUS_RESULT Result = RESOLVBUS_OK;
+
+    __ASSERT_WITH(NULLPOINTER, Transceiver);
+    __ASSERT_WITH(NULLPOINTER, Event);
+
+    __WRAP(__CommitAction(Transceiver, Event));
+
+    return Result;
+}
+
+
+RESOLVBUS_RESULT ResolVBus_LiveTransceiver_WaitForAnyData(RESOLVBUS_LIVETRANSCEIVER *Transceiver, const RESOLVBUS_LIVETRANSCEIVEROPTIONS *CustomOptions, RESOLVBUS_LIVETRANSCEIVERHANDLER Handler)
+{
+    RESOLVBUS_RESULT Result = RESOLVBUS_OK;
+
+    RESOLVBUS_LIVETRANSCEIVEROPTIONS Options = RESOLVBUS_LIVETRANSCEIVEROPTIONS_INITIALIZER;
+    if (Result == RESOLVBUS_OK) {
+        Result = __ApplyOptions(&__WaitForAnyDataOptions, CustomOptions, &Options);
+    }
+
+    if (Result == RESOLVBUS_OK) {
+        Result = __SetAction(Transceiver, __WaitForAnyDataHandler, &Options, Handler);
+    }
 
     return Result;
 }
