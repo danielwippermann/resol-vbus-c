@@ -150,6 +150,46 @@ static RESOLVBUS_RESULT __RunTestSuite_Testing(void)
 }
 
 
+static RESOLVBUS_RESULT __TestContainerOf(void)
+{
+    RESOLVBUS_RESULT Result = RESOLVBUS_OK;
+
+    struct __TESTSTRUCT1 {
+        int Member1;
+        int Member2;
+        int Member3;
+    };
+
+    struct __TESTSTRUCT2 {
+        struct __TESTSTRUCT1 Member1;
+    };
+
+    struct __TESTSTRUCT3 {
+        struct __TESTSTRUCT2 Member1;
+    };
+
+    struct __TESTSTRUCT3 TestStruct = {
+        .Member1.Member1.Member3 = 1234,
+    };
+
+    int *pMember3 = &TestStruct.Member1.Member1.Member3;
+
+    __ASSERT_POINTER_EQL(&TestStruct, RESOLVBUS_CONTAINEROF(pMember3, struct __TESTSTRUCT3, Member1.Member1.Member3));
+
+    return Result;
+}
+
+
+static RESOLVBUS_RESULT __RunTestSuite_Macros(void)
+{
+    RESOLVBUS_RESULT Result = RESOLVBUS_OK;
+
+    __WRAP(__TestContainerOf());
+
+    return Result;
+}
+
+
 
 //---------------------------------------------------------------------------
 // PUBLIC METHODS
@@ -255,6 +295,7 @@ int main(int argc, char **argv)
     ResolVBus_PrintBacktrace();  // NOTE(daniel): for coverage reasons
 
     __WRAP(__RunTestSuite_Testing());
+    __WRAP(__RunTestSuite_Macros());
 
     __WRAP(RunTestSuite_Base());
     __WRAP(RunTestSuite_Debug());

@@ -25,7 +25,7 @@
 //---------------------------------------------------------------------------
 
 #define RESOLVBUS_CONTAINEROF(__Pointer__, __Type__, __Member__) \
-    ((__Type__ *) (((uint8_t *) (__Pointer__)) - ((uint8_t *) (&((__Type__ *) 0)->__Member__))))
+    ((__Type__ *) (((uint8_t *) (__Pointer__)) - offsetof(__Type__, __Member__)))
 
 
 #define RESOLVBUS_COUNTOF(__Array__) \
