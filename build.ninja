@@ -30,6 +30,7 @@ build $hostOutputDirname/tmp/src/ResolVBusLiveEncoder.o: compileHost src/ResolVB
 build $hostOutputDirname/tmp/src/ResolVBusLiveTransceiver.o: compileHost src/ResolVBusLiveTransceiver.c
 
 build $hostOutputDirname/tmp/test/BaseTestSuite.o: compileHost test/BaseTestSuite.c
+build $hostOutputDirname/tmp/test/DebugTestSuite.o: compileHost test/DebugTestSuite.c
 build $hostOutputDirname/tmp/test/LiveDecoderTestSuite.o: compileHost test/LiveDecoderTestSuite.c
 build $hostOutputDirname/tmp/test/LiveEncoderTestSuite.o: compileHost test/LiveEncoderTestSuite.c
 build $hostOutputDirname/tmp/test/LiveTransceiverTestSuite.o: compileHost test/LiveTransceiverTestSuite.c
@@ -53,6 +54,7 @@ build $hostOutputDirname/bin/ResolVBusTest: linkHost $hostOutputDirname/tmp/src/
                                                      $hostOutputDirname/tmp/src/ResolVBusLiveTransceiver.o $
                                                      $
                                                      $hostOutputDirname/tmp/test/BaseTestSuite.o $
+                                                     $hostOutputDirname/tmp/test/DebugTestSuite.o $
                                                      $hostOutputDirname/tmp/test/LiveDecoderTestSuite.o $
                                                      $hostOutputDirname/tmp/test/LiveEncoderTestSuite.o $
                                                      $hostOutputDirname/tmp/test/LiveTransceiverTestSuite.o $

@@ -218,6 +218,7 @@ int main(int argc, char **argv)
     __WRAP(__RunTestSuite_Testing());
 
     __WRAP(RunTestSuite_Base());
+    __WRAP(RunTestSuite_Debug());
     __WRAP(RunTestSuite_LiveDecoder());
     __WRAP(RunTestSuite_LiveEncoder());
     __WRAP(RunTestSuite_LiveTransceiver());

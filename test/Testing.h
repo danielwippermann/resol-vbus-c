@@ -49,6 +49,10 @@
     __WRAP_SHORT(AssertPointerEql(__Left__, #__Left__, __Right__, #__Right__)); \
 
 
+#define __ASSERT_STRING_EQL(__Left__, __Right__) \
+    __WRAP_SHORT(AssertStringEql(__Left__, #__Left__, __Right__, #__Right__)); \
+
+
 #define __ASSERT_RESULT_EQL(__ErrorSuffix__, __ErrorMessage__, __Result__) \
     __WRAP_SHORT(AssertResultEql(RESOLVBUS_ERROR_##__ErrorSuffix__, __ErrorMessage__, __Result__)); \
 
@@ -100,6 +104,7 @@ RESOLVBUS_RESULT AssertResultEql(RESOLVBUS_RESULT ExpectedResult, const char *Ex
 
 
 RESOLVBUS_RESULT RunTestSuite_Base(void);
+RESOLVBUS_RESULT RunTestSuite_Debug(void);
 RESOLVBUS_RESULT RunTestSuite_LiveDecoder(void);
 RESOLVBUS_RESULT RunTestSuite_LiveEncoder(void);
 RESOLVBUS_RESULT RunTestSuite_LiveTransceiver(void);
