@@ -33,6 +33,7 @@ build $hostOutputDirname/tmp/test/BaseTestSuite.o: compileHost test/BaseTestSuit
 build $hostOutputDirname/tmp/test/LiveDecoderTestSuite.o: compileHost test/LiveDecoderTestSuite.c
 build $hostOutputDirname/tmp/test/LiveEncoderTestSuite.o: compileHost test/LiveEncoderTestSuite.c
 build $hostOutputDirname/tmp/test/LiveTransceiverTestSuite.o: compileHost test/LiveTransceiverTestSuite.c
+build $hostOutputDirname/tmp/test/AccessoryBridgeExampleTest.o: compileHost test/AccessoryBridgeExampleTest.c
 build $hostOutputDirname/tmp/test/MasterExampleTest.o: compileHost test/MasterExampleTest.c
 build $hostOutputDirname/tmp/test/MinionExampleTest.o: compileHost test/MinionExampleTest.c
 build $hostOutputDirname/tmp/test/ParameterizationExampleTest.o: compileHost test/ParameterizationExampleTest.c
@@ -55,6 +56,7 @@ build $hostOutputDirname/bin/ResolVBusTest: linkHost $hostOutputDirname/tmp/src/
                                                      $hostOutputDirname/tmp/test/LiveDecoderTestSuite.o $
                                                      $hostOutputDirname/tmp/test/LiveEncoderTestSuite.o $
                                                      $hostOutputDirname/tmp/test/LiveTransceiverTestSuite.o $
+                                                     $hostOutputDirname/tmp/test/AccessoryBridgeExampleTest.o $
                                                      $hostOutputDirname/tmp/test/MasterExampleTest.o $
                                                      $hostOutputDirname/tmp/test/MinionExampleTest.o $
                                                      $hostOutputDirname/tmp/test/ParameterizationExampleTest.o $
@@ -73,11 +75,13 @@ build $embeddedOutputDirname/lib/libResolVBus.a: archiveEmbedded $embeddedOutput
                                                                  $embeddedOutputDirname/tmp/src/ResolVBusLiveEncoder.o $
                                                                  $embeddedOutputDirname/tmp/src/ResolVBusLiveTransceiver.o $
 
+build $embeddedOutputDirname/tmp/examples/AccessoryBridge.o: compileEmbedded examples/AccessoryBridge.c
 build $embeddedOutputDirname/tmp/examples/Master.o: compileEmbedded examples/Master.c
 build $embeddedOutputDirname/tmp/examples/Minion.o: compileEmbedded examples/Minion.c
 build $embeddedOutputDirname/tmp/examples/Parameterization.o: compileEmbedded examples/Parameterization.c
 
-build embeddedExamples: phony $embeddedOutputDirname/tmp/examples/Master.o $
+build embeddedExamples: phony $embeddedOutputDirname/tmp/examples/AccessoryBridge.o $
+                              $embeddedOutputDirname/tmp/examples/Master.o $
                               $embeddedOutputDirname/tmp/examples/Minion.o $
                               $embeddedOutputDirname/tmp/examples/Parameterization.o $
 

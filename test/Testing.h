@@ -105,6 +105,7 @@ RESOLVBUS_RESULT RunTestSuite_LiveEncoder(void);
 RESOLVBUS_RESULT RunTestSuite_LiveTransceiver(void);
 
 
+RESOLVBUS_RESULT RunTest_AccessoryBridgeExample(void);
 RESOLVBUS_RESULT RunTest_MasterExample(void);
 RESOLVBUS_RESULT RunTest_MinionExample(void);
 RESOLVBUS_RESULT RunTest_ParameterizationExample(void);

@@ -222,6 +222,7 @@ int main(int argc, char **argv)
     __WRAP(RunTestSuite_LiveEncoder());
     __WRAP(RunTestSuite_LiveTransceiver());
 
+    __WRAP(RunTest_AccessoryBridgeExample());
     __WRAP(RunTest_MasterExample());
     __WRAP(RunTest_MinionExample());
     __WRAP(RunTest_ParameterizationExample());
