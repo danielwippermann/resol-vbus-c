@@ -7,6 +7,7 @@
 //
 
 #include <stdlib.h>
+#include <sys/wait.h>
 #include <unistd.h>
 
 
@@ -182,6 +183,11 @@ static RESOLVBUS_RESULT __TestPrintBacktrace(void)
 
             close(StdoutReader);
 
+            int ChildStatus = 0;
+            __ASSERT(waitpid(Pid, &ChildStatus, 0) == Pid);
+            __ASSERT(WIFEXITED(ChildStatus));
+            __ASSERT(WEXITSTATUS(ChildStatus) == 0);
+
             const char *Expected =
                 "Message1\n"
                 "\n"
@@ -245,6 +251,11 @@ static RESOLVBUS_RESULT __TestDebugLog(void)
             }
 
             close(StdoutReader);
+
+            int ChildStatus = 0;
+            __ASSERT(waitpid(Pid, &ChildStatus, 0) == Pid);
+            __ASSERT(WIFEXITED(ChildStatus));
+            __ASSERT(WEXITSTATUS(ChildStatus) == 0);
 
             const char *Expected = "Message: Test  [Func (File:111)]\n";
 
