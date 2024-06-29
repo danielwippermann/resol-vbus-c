@@ -75,6 +75,30 @@ static RESOLVBUS_RESULT __TestAssertEql(void)
 }
 
 
+static RESOLVBUS_RESULT __TestAssertNotEql(void)
+{
+    RESOLVBUS_RESULT Result = RESOLVBUS_OK;
+
+    __WRAP(AssertNotEql(123, "LeftValue123", 234, "RightValue234"));
+
+    __ASSERT_RESULT_EQL(UNKNOWN, "Expected values not to equal\n  Left:  LeftValue123 = 123 (0x7B)\n  Right: RightValue123 = 123 (0x7B)\n\nBacktrace:\n", AssertNotEql(123, "LeftValue123", 123, "RightValue123"));
+
+    return Result;
+}
+
+
+static RESOLVBUS_RESULT __TestAssertPointerEql(void)
+{
+    RESOLVBUS_RESULT Result = RESOLVBUS_OK;
+
+    __WRAP(AssertPointerEql((const void *) 123, "LeftValue123", (const void *) 123, "RightValue123"));
+
+    __ASSERT_RESULT_EQL(UNKNOWN, "Expected pointers to equal\n  Left:  LeftValue123 = 0x7b\n  Right: RightValue234 = 0xea\n\nBacktrace:\n", AssertPointerEql((const void *) 123, "LeftValue123", (const void *) 234, "RightValue234"));
+
+    return Result;
+}
+
+
 static RESOLVBUS_RESULT __TestAssertStringEql(void)
 {
     RESOLVBUS_RESULT Result = RESOLVBUS_OK;
@@ -95,6 +119,19 @@ static RESOLVBUS_RESULT __TestAssertResultEql(void)
 
     __ASSERT_RESULT_EQL(UNKNOWN, "Message\n\nBacktrace:\n- Expression (Func @ File:123)\n", RESOLVBUS_ERROR_UNKNOWN);
 
+    const char *Expected =
+        "Expected strings to equal\n"
+        "  Left:    Actual = \"Message\n"
+        "\n"
+        "Backtrace:\n"
+        "- Expression (Func @ File:123)\n"
+        "\"\n"
+        "  Right: Expected = \"UnexpectedMessage\"\n"
+        "\n"
+        "Backtrace:\n";
+
+    __ASSERT_RESULT_EQL(UNKNOWN, Expected, AssertResultEql(0, "UnexpectedMessage", 0));
+
     return Result;
 }
 
@@ -104,6 +141,8 @@ static RESOLVBUS_RESULT __RunTestSuite_Testing(void)
     RESOLVBUS_RESULT Result = RESOLVBUS_OK;
 
     __WRAP(__TestAssertEql());
+    __WRAP(__TestAssertNotEql());
+    __WRAP(__TestAssertPointerEql());
     __WRAP(__TestAssertStringEql());
     __WRAP(__TestAssertResultEql());
 
